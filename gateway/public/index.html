@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <title>Corkathon — Admin Console</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#14181F" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -12,180 +13,301 @@
     />
     <link rel="stylesheet" href="/styles.css" />
   </head>
-  <body>
-    <main>
-      <header class="masthead">
-        <div class="brand">
-          <span class="brand-mark">Corkathon</span>
-          <span class="brand-divider"></span>
-          <span class="brand-sub">Admin console</span>
+  <body data-section="overview">
+    <div class="shell">
+      <!-- ─── Sidebar ─────────────────────────────────── -->
+      <aside class="sidebar">
+        <div class="side-brand">
+          <span class="side-mark">Corkathon</span>
+          <span class="side-sub">Admin console</span>
         </div>
-        <div class="brand-right">
-          <div class="session">
-            <span class="session-lbl">Session</span>
-            <span class="session-val" id="clock">—</span>
-          </div>
-          <button id="syncAll" class="btn-primary" type="button">
-            Sync all patients
+
+        <nav class="side-nav" aria-label="main navigation">
+          <div class="side-group">Main</div>
+          <button class="side-item" data-nav="overview">
+            <span class="side-icon" aria-hidden="true">
+              <svg viewBox="0 0 16 16" width="16" height="16"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>
+            </span>
+            Overview
           </button>
-        </div>
-      </header>
+          <button class="side-item" data-nav="pipeline">
+            <span class="side-icon" aria-hidden="true">
+              <svg viewBox="0 0 16 16" width="16" height="16"><circle cx="3" cy="8" r="2"/><circle cx="8" cy="8" r="2"/><circle cx="13" cy="8" r="2"/><line x1="5" y1="8" x2="6" y2="8" stroke="currentColor" stroke-width="1.2"/><line x1="10" y1="8" x2="11" y2="8" stroke="currentColor" stroke-width="1.2"/></svg>
+            </span>
+            Pipeline
+          </button>
+          <button class="side-item" data-nav="patients">
+            <span class="side-icon" aria-hidden="true">
+              <svg viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3 3-5 6-5s6 2 6 5"/></svg>
+            </span>
+            Patients
+          </button>
+          <button class="side-item" data-nav="telemetry">
+            <span class="side-icon" aria-hidden="true">
+              <svg viewBox="0 0 16 16" width="16" height="16"><line x1="2" y1="4" x2="14" y2="4" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="8" x2="10" y2="8" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="12" x2="12" y2="12" stroke="currentColor" stroke-width="1.5"/></svg>
+            </span>
+            Telemetry
+          </button>
+        </nav>
 
-      <section class="stations" aria-label="service status">
-        <article class="station" data-node="whoop">
-          <div class="station-head">
-            <span class="station-kicker">Source · :4001</span>
+        <div class="side-footer">
+          <div class="side-group">Services</div>
+          <div class="side-service" data-node="whoop">
             <span class="dot" data-health="whoop"></span>
+            <span class="side-service-name">Whoop</span>
+            <span class="side-service-port">:4001</span>
           </div>
-          <div class="station-name">Whoop</div>
-          <div class="station-meta">
-            <span class="metric" data-metric="whoop-patients">—</span>
-            <span class="metric-sub">patients enrolled</span>
-          </div>
-        </article>
-        <article class="station" data-node="gateway">
-          <div class="station-head">
-            <span class="station-kicker">Translator · :4002</span>
+          <div class="side-service" data-node="gateway">
             <span class="dot" data-health="gateway"></span>
+            <span class="side-service-name">Gateway</span>
+            <span class="side-service-port">:4002</span>
           </div>
-          <div class="station-name">Gateway</div>
-          <div class="station-meta">
-            <span class="metric" data-metric="gateway-ai">—</span>
-          </div>
-        </article>
-        <article class="station" data-node="hospital">
-          <div class="station-head">
-            <span class="station-kicker">Receiver · :4003</span>
+          <div class="side-service" data-node="hospital">
             <span class="dot" data-health="hospital"></span>
+            <span class="side-service-name">Hospital</span>
+            <span class="side-service-port">:4003</span>
           </div>
-          <div class="station-name">Hospital</div>
-          <div class="station-meta">
-            <span class="metric" data-metric="hospital-records">—</span>
-            <span class="metric-sub">records on file</span>
+          <div class="side-ai">
+            <span class="side-ai-dot" data-ai-ok="false"></span>
+            <span class="side-ai-lbl">AI translator</span>
+            <span class="side-ai-val" id="ai-status">—</span>
           </div>
-        </article>
-      </section>
-
-      <section class="pipeline" aria-label="pipeline">
-        <div class="panel-head">
-          <span class="panel-title">Pipeline</span>
-          <span class="panel-aux" id="pipeline-status">Idle</span>
         </div>
-        <svg
-          id="pipeline-svg"
-          viewBox="0 0 1000 200"
-          preserveAspectRatio="xMidYMid meet"
-          data-stage="idle"
-        >
-          <!-- rails -->
-          <line class="rail-main" x1="90" y1="100" x2="910" y2="100" />
+      </aside>
 
-          <!-- segment highlights -->
-          <line class="segment seg-1" x1="90" y1="100" x2="500" y2="100" />
-          <line class="segment seg-2" x1="500" y1="100" x2="910" y2="100" />
-
-          <!-- station nodes -->
-          <g class="node node-whoop" transform="translate(90,100)">
-            <rect x="-30" y="-24" width="60" height="48" rx="6" class="node-box" />
-            <text class="node-letter" y="5" text-anchor="middle">A</text>
-            <text class="node-caption" y="-38" text-anchor="middle">Whoop</text>
-            <text class="node-sub" y="50" text-anchor="middle">Fetch snapshot</text>
-          </g>
-
-          <g class="node node-gateway" transform="translate(500,100)">
-            <rect x="-34" y="-24" width="68" height="48" rx="24" class="node-box" />
-            <text class="node-letter" y="5" text-anchor="middle">B</text>
-            <text class="node-caption" y="-38" text-anchor="middle">Gateway</text>
-            <text class="node-sub" y="50" text-anchor="middle">Consent + translate</text>
-          </g>
-
-          <g class="node node-hospital" transform="translate(910,100)">
-            <rect x="-30" y="-24" width="60" height="48" rx="6" class="node-box" />
-            <text class="node-letter" y="5" text-anchor="middle">C</text>
-            <text class="node-caption" y="-38" text-anchor="middle">Hospital</text>
-            <text class="node-sub" y="50" text-anchor="middle">Validate + store</text>
-          </g>
-
-          <!-- flow packets (positioned via JS transform) -->
-          <g class="packet-group packet-1">
-            <circle r="4" cy="100" cx="90" />
-          </g>
-          <g class="packet-group packet-2">
-            <circle r="3" cy="100" cx="90" fill-opacity="0.6" />
-          </g>
-          <g class="packet-group packet-3">
-            <circle r="2" cy="100" cx="90" fill-opacity="0.35" />
-          </g>
-        </svg>
-      </section>
-
-      <section class="main-grid">
-        <aside class="roster">
-          <div class="panel-head">
-            <span class="panel-title">Patients</span>
-            <span class="panel-aux">whoop :4001</span>
+      <!-- ─── Main ────────────────────────────────────── -->
+      <main class="main">
+        <header class="topbar">
+          <div class="topbar-left">
+            <h1 class="topbar-title" id="section-title">Overview</h1>
+            <span class="topbar-sub" id="section-sub">Live status for the Whoop → Hospital pipeline.</span>
           </div>
-          <ul id="patients" class="roster-list">
-            <li class="roster-empty">Loading patients…</li>
-          </ul>
-        </aside>
-
-        <article class="trace">
-          <div class="panel-head trace-head">
-            <span class="panel-title">Latest trace</span>
-            <span class="panel-aux" id="trace-meta">No sync yet</span>
+          <div class="topbar-right">
+            <div class="session">
+              <span class="session-lbl">Session</span>
+              <span class="session-val" id="clock">—</span>
+            </div>
+            <button id="syncAll" class="btn-primary" type="button">Sync all</button>
           </div>
-          <div class="trace-stages">
-            <div class="trace-stage" data-stage="whoop">
-              <div class="trace-lbl">
-                <span class="trace-num">01</span>
-                <span class="trace-title">Snapshot</span>
-                <span class="trace-badge" data-badge="whoop">—</span>
-              </div>
-              <pre class="trace-body" data-trace="snapshot"><span class="dim">Run a sync to populate.</span></pre>
+        </header>
+
+        <!-- ─── Overview ────────────────────────────── -->
+        <section class="view" data-view="overview">
+          <div class="kpi-grid">
+            <div class="kpi">
+              <div class="kpi-lbl">Patients enrolled</div>
+              <div class="kpi-val" data-kpi="patients">—</div>
+              <div class="kpi-sub">in the Whoop mock</div>
             </div>
-            <div class="trace-stage" data-stage="translate">
-              <div class="trace-lbl">
-                <span class="trace-num">02</span>
-                <span class="trace-title">Bundle</span>
-                <span class="trace-badge" data-badge="translate">—</span>
-              </div>
-              <pre class="trace-body" data-trace="bundle"><span class="dim">—</span></pre>
+            <div class="kpi">
+              <div class="kpi-lbl">Syncs this session</div>
+              <div class="kpi-val" data-kpi="syncs">—</div>
+              <div class="kpi-sub">pipeline runs</div>
             </div>
-            <div class="trace-stage" data-stage="hospital">
-              <div class="trace-lbl">
-                <span class="trace-num">03</span>
-                <span class="trace-title">Receipt</span>
-                <span class="trace-badge" data-badge="hospital">—</span>
-              </div>
-              <pre class="trace-body" data-trace="hospital"><span class="dim">—</span></pre>
+            <div class="kpi">
+              <div class="kpi-lbl">Records on file</div>
+              <div class="kpi-val" data-kpi="records">—</div>
+              <div class="kpi-sub">hospital store</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-lbl">Alerts fired</div>
+              <div class="kpi-val kpi-val-warn" data-kpi="alerts">—</div>
+              <div class="kpi-sub">from hospital alert rules</div>
             </div>
           </div>
-        </article>
-      </section>
 
-      <section class="telemetry">
-        <div class="panel-head">
-          <span class="panel-title">Telemetry</span>
-          <span class="panel-aux legend">
-            <em class="lg-ok">● ok</em>
-            <em class="lg-warn">● warn</em>
-            <em class="lg-err">● error</em>
-            <em class="lg-info">● info</em>
-          </span>
-        </div>
-        <div id="log" class="log" tabindex="0" aria-live="polite">
-          <div class="log-empty">No events yet — events will stream here as the pipeline runs.</div>
-        </div>
-      </section>
+          <div class="split-grid">
+            <div class="panel">
+              <div class="panel-head">
+                <span class="panel-title">Pipeline</span>
+                <span class="panel-aux">
+                  <span class="pill" id="pipeline-status">Idle</span>
+                </span>
+              </div>
+              <svg
+                id="pipeline-svg"
+                viewBox="0 0 1000 200"
+                preserveAspectRatio="xMidYMid meet"
+                data-stage="idle"
+              >
+                <line class="rail-main" x1="90" y1="100" x2="910" y2="100" />
+                <line class="segment seg-1" x1="90" y1="100" x2="500" y2="100" />
+                <line class="segment seg-2" x1="500" y1="100" x2="910" y2="100" />
 
-      <footer class="footer">
-        <span class="foot-mark">Corkathon · 2026</span>
-        <span class="foot-note">
-          <em>A wearable-to-hospital pipeline that explains itself.</em>
-        </span>
-      </footer>
-    </main>
+                <g class="node node-whoop" transform="translate(90,100)">
+                  <rect x="-30" y="-24" width="60" height="48" rx="6" class="node-box" />
+                  <text class="node-letter" y="5" text-anchor="middle">A</text>
+                  <text class="node-caption" y="-38" text-anchor="middle">Whoop</text>
+                  <text class="node-sub" y="50" text-anchor="middle">Fetch snapshot</text>
+                </g>
+                <g class="node node-gateway" transform="translate(500,100)">
+                  <rect x="-34" y="-24" width="68" height="48" rx="24" class="node-box" />
+                  <text class="node-letter" y="5" text-anchor="middle">B</text>
+                  <text class="node-caption" y="-38" text-anchor="middle">Gateway</text>
+                  <text class="node-sub" y="50" text-anchor="middle">Consent + translate</text>
+                </g>
+                <g class="node node-hospital" transform="translate(910,100)">
+                  <rect x="-30" y="-24" width="60" height="48" rx="6" class="node-box" />
+                  <text class="node-letter" y="5" text-anchor="middle">C</text>
+                  <text class="node-caption" y="-38" text-anchor="middle">Hospital</text>
+                  <text class="node-sub" y="50" text-anchor="middle">Validate + store</text>
+                </g>
+
+                <g class="packet-group packet-1"><circle r="4" cy="100" cx="90" /></g>
+                <g class="packet-group packet-2"><circle r="3" cy="100" cx="90" fill-opacity="0.6" /></g>
+                <g class="packet-group packet-3"><circle r="2" cy="100" cx="90" fill-opacity="0.35" /></g>
+              </svg>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head">
+                <span class="panel-title">Recent activity</span>
+                <span class="panel-aux">
+                  <a class="panel-link" data-nav="telemetry" href="#">View all →</a>
+                </span>
+              </div>
+              <div class="activity" id="activity">
+                <div class="activity-empty">No activity yet.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <span class="panel-title">Latest trace</span>
+              <span class="panel-aux" id="trace-meta">No sync yet</span>
+            </div>
+            <div class="trace-stages">
+              <div class="trace-stage">
+                <div class="trace-lbl">
+                  <span class="trace-num">01</span>
+                  <span class="trace-title">Snapshot</span>
+                  <span class="trace-badge" data-badge="whoop">—</span>
+                </div>
+                <pre class="trace-body" data-trace="snapshot"><span class="dim">Run a sync to populate.</span></pre>
+              </div>
+              <div class="trace-stage">
+                <div class="trace-lbl">
+                  <span class="trace-num">02</span>
+                  <span class="trace-title">Bundle</span>
+                  <span class="trace-badge" data-badge="translate">—</span>
+                </div>
+                <pre class="trace-body" data-trace="bundle"><span class="dim">—</span></pre>
+              </div>
+              <div class="trace-stage">
+                <div class="trace-lbl">
+                  <span class="trace-num">03</span>
+                  <span class="trace-title">Receipt</span>
+                  <span class="trace-badge" data-badge="hospital">—</span>
+                </div>
+                <pre class="trace-body" data-trace="hospital"><span class="dim">—</span></pre>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ─── Pipeline view ───────────────────────── -->
+        <section class="view" data-view="pipeline">
+          <div class="panel">
+            <div class="panel-head">
+              <span class="panel-title">Pipeline detail</span>
+              <span class="panel-aux">
+                <span class="pill-neutral">Whoop :4001</span>
+                <span class="pill-arrow">→</span>
+                <span class="pill-neutral">Gateway :4002</span>
+                <span class="pill-arrow">→</span>
+                <span class="pill-neutral">Hospital :4003</span>
+              </span>
+            </div>
+            <p class="panel-note">
+              <em>Each sync pulls a Whoop snapshot, filters metrics through consent, translates to a FHIR transaction Bundle (Claude Opus 4.7 with a rule-based fallback), and posts to the hospital endpoint. Stages animate as telemetry events arrive over SSE.</em>
+            </p>
+          </div>
+          <div class="panel">
+            <div class="panel-head">
+              <span class="panel-title">Endpoints</span>
+            </div>
+            <table class="endpoints-table">
+              <thead>
+                <tr><th>Service</th><th>Verb</th><th>Path</th><th>Purpose</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><span class="pill-neutral">Whoop</span></td><td><code>GET</code></td><td><code>/patients/:id/snapshot</code></td><td>Latest wearable reading</td></tr>
+                <tr><td><span class="pill-neutral">Whoop</span></td><td><code>GET</code></td><td><code>/patients/:id/history</code></td><td>5-day history</td></tr>
+                <tr><td><span class="pill-neutral">Gateway</span></td><td><code>POST</code></td><td><code>/sync/:id</code></td><td>Trigger a full sync</td></tr>
+                <tr><td><span class="pill-neutral">Gateway</span></td><td><code>GET</code></td><td><code>/events/stream</code></td><td>Live telemetry (SSE)</td></tr>
+                <tr><td><span class="pill-neutral">Hospital</span></td><td><code>POST</code></td><td><code>/fhir/Bundle</code></td><td>Receive FHIR transaction Bundle</td></tr>
+                <tr><td><span class="pill-neutral">Hospital</span></td><td><code>GET</code></td><td><code>/records</code></td><td>Stored records with alerts</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ─── Patients view ───────────────────────── -->
+        <section class="view" data-view="patients">
+          <div class="panel">
+            <div class="panel-head">
+              <span class="panel-title">Enrolled patients</span>
+              <span class="panel-aux" id="patients-count">—</span>
+            </div>
+            <table class="patients-table" id="patients-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Scenario</th>
+                  <th>Consent</th>
+                  <th>Last sync</th>
+                  <th class="align-right">Action</th>
+                </tr>
+              </thead>
+              <tbody id="patients-tbody">
+                <tr><td colspan="6" class="t-empty">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ─── Telemetry view ───────────────────────── -->
+        <section class="view" data-view="telemetry">
+          <div class="panel">
+            <div class="panel-head">
+              <span class="panel-title">Telemetry</span>
+              <span class="panel-aux legend">
+                <em class="lg-ok">● ok</em>
+                <em class="lg-warn">● warn</em>
+                <em class="lg-err">● error</em>
+                <em class="lg-info">● info</em>
+              </span>
+            </div>
+            <div class="log-controls">
+              <div class="log-filters">
+                <label>
+                  <span class="filter-lbl">Level</span>
+                  <select id="filter-level">
+                    <option value="all">All</option>
+                    <option value="ok">Ok</option>
+                    <option value="warn">Warn</option>
+                    <option value="error">Error</option>
+                    <option value="info">Info</option>
+                  </select>
+                </label>
+                <label>
+                  <span class="filter-lbl">Patient</span>
+                  <select id="filter-patient">
+                    <option value="all">All</option>
+                  </select>
+                </label>
+              </div>
+              <button id="clearLog" class="btn-ghost" type="button">Clear</button>
+            </div>
+            <div id="log" class="log" tabindex="0" aria-live="polite">
+              <div class="log-empty">No events yet.</div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
 
     <script src="/app.js" type="module"></script>
   </body>
