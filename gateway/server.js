@@ -1,3 +1,4 @@
+import fs from "fs";
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -7,6 +8,23 @@ import { translateRuleBased, LOINC_MAPPING, UNMAPPED_WHOOP_FIELDS } from "./tran
 import { translateWithClaude } from "./translate-ai.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Load gateway/.env if present (optional, gitignored). Lets you supply
+// ANTHROPIC_API_KEY without baking it into the shell. translate-ai.js
+// lazy-initializes the Anthropic client at first SYNC, so reading the env
+// here (before any API call) is enough.
+const envPath = path.join(__dirname, ".env");
+if (fs.existsSync(envPath)) {
+  for (const raw of fs.readFileSync(envPath, "utf8").split("\n")) {
+    const line = raw.trim();
+    if (!line || line.startsWith("#")) continue;
+    const m = line.match(/^([A-Z_][A-Z0-9_]*)\s*=\s*(.*)$/);
+    if (m && process.env[m[1]] === undefined) {
+      process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
+    }
+  }
+  console.log(`[gateway] loaded .env`);
+}
 
 const app = express();
 app.use(express.json({ limit: "1mb" }));
