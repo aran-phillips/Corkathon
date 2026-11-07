@@ -1,14 +1,20 @@
 # Corkathon — Whoop → AI Gateway → Hospital
 
-Three-service pipeline for the hackathon. One person owns each service; they
-agree on the two contracts in [`contracts/`](contracts/README.md) and then
-work in parallel.
+Four-service pipeline for the hackathon. The admin dashboard is its own
+service that proxies to the other three, so the frontend always talks to
+one origin.
 
 ```
-  Patient's wearable        AI Gateway (translator)       Hospital FHIR API
-  ─────────────────         ──────────────────────        ─────────────────
-  whoop/   :4001    ───►    gateway/  :4002       ───►    hospital/  :4003
-  Person A                  Person B                      Person C
+  Patient's wearable      AI Gateway (translator)     Hospital FHIR API
+  ─────────────────       ──────────────────────      ─────────────────
+  whoop/   :4001  ───►    gateway/  :4002      ───►   hospital/  :4003
+  Person A                Person B                    Person C
+                              ▲                              ▲
+                              │ proxy                        │ proxy
+                              └──────────┬───────────────────┘
+                                         │
+                                    admin/  :4000
+                                    (dashboard + BFF)
 ```
 
 ## Quick start
@@ -18,23 +24,27 @@ work in parallel.
 npm install
 npm run install:all
 
-# run all three services (ctrl-c stops all)
+# run all four services (ctrl-c stops all)
 npm run dev
 ```
 
-Open the **admin dashboard** at http://localhost:4002/ — it shows live service health, a visual pipeline that animates during each sync, per-patient run buttons, the latest trace (snapshot / bundle / receipt), and a streaming telemetry log. Everything is driven by the gateway's `/events/stream` SSE endpoint.
+Open the **admin dashboard** at http://localhost:4000/. It shows live
+service health, a visual pipeline that animates during each sync, a
+compatibility matrix that flags blocked fields, per-API pages, and a
+streaming telemetry log. All driven by SSE from the gateway through the
+admin passthrough.
 
-Or trigger syncs manually:
+Trigger a sync (admin proxies to gateway):
 
 ```bash
 # stable patient
-curl -X POST http://localhost:4002/sync/pt-001 | jq
+curl -X POST http://localhost:4000/sync/pt-001 | jq
 
 # heart-risk patient — hospital response should include alerts
-curl -X POST http://localhost:4002/sync/pt-002 | jq
+curl -X POST http://localhost:4000/sync/pt-002 | jq
 
-# see what the hospital has stored
-curl http://localhost:4003/records | jq
+# see what the hospital has stored (admin proxies direct to hospital)
+curl http://localhost:4000/hospital/records | jq
 ```
 
 ## Services
@@ -58,6 +68,13 @@ curl http://localhost:4003/records | jq
 - `POST /fhir/Bundle` — validates, stores, returns `201` with alerts or `422` with errors.
 - `GET /records`, `GET /records/:id`, `GET /patients/:ref/records` — read side for the clinician dashboard.
 - Alert thresholds in [`hospital/alerts.js`](hospital/alerts.js).
+
+### `admin/` — dashboard + backend-for-frontend
+- Serves the dashboard at `/` from `admin/public/`.
+- Proxies gateway endpoints (`/patients`, `/mapping`, `/compatibility/:id`, `/sync/:id`, `/events`, `/events/stream`, `/whoop/snapshot/:id`).
+- Proxies hospital directly for records (`/hospital/records`, `/hospital/records/:id`, `/hospital/patients/:ref/records`).
+- Aggregates health across all services at `/health/all`.
+- Config via env: `WHOOP_URL`, `GATEWAY_URL`, `HOSPITAL_URL` (defaults to localhost on 4001/4002/4003).
 
 ## Contracts
 
