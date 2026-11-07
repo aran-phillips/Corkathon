@@ -42,6 +42,9 @@ const SECTION_META = {
 function go(section) {
   if (!SECTION_META[section]) section = "overview";
   document.body.dataset.section = section;
+  if (location.hash.slice(1) !== section) {
+    history.replaceState(null, "", `#${section}`);
+  }
   const [t, s] = SECTION_META[section];
   $("#section-title").textContent = t;
   $("#section-sub").textContent = s;
@@ -880,7 +883,8 @@ function connectStream() {
 }
 
 // ─── Boot ───────────────────────────────────────────────────
-go("overview");
+window.addEventListener("hashchange", () => go(location.hash.slice(1) || "overview"));
+go(location.hash.slice(1) || "overview");
 connectStream();
 loadPatients();
 loadHospitalRecords();
