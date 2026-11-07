@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 24" role="img" aria-label="HealthConnect">
+  <title>HealthConnect</title>
+  <!-- Left node: patient / wearable -->
+  <circle cx="6" cy="12" r="3.5" fill="#4ba3c7"/>
+  <!-- Pulse line bridging the two nodes -->
+  <path d="M 10 12 L 16 12 L 18.5 6.5 L 22 18 L 25 7.5 L 28 14 L 30 12 L 38 12"
+        fill="none"
+        stroke="#4ba3c7"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"/>
+  <!-- Right node: hospital / clinician, with "live" green ring -->
+  <circle cx="42" cy="12" r="3.5" fill="#26d07c"/>
+  <circle cx="42" cy="12" r="5.5" fill="none" stroke="#26d07c" stroke-opacity="0.25" stroke-width="1.5"/>
+</svg>

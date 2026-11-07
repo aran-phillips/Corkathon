@@ -95,6 +95,10 @@ body {
   border-bottom: 1px solid var(--side-border);
   margin-bottom: 14px;
 }
+.side-logo {
+  display: block;
+  margin-bottom: 8px;
+}
 .side-mark {
   display: block;
   font-family: var(--font-serif);
@@ -1354,7 +1358,7 @@ code.verb-post {
   :root { --sidebar-w: 72px; }
   .side-brand { padding: 4px 10px 16px; text-align: center; }
   .side-mark { font-size: 16px; }
-  .side-sub, .side-group, .side-service-name, .side-service-port, .side-ai-lbl, .side-ai-val, .side-applink-name, .side-applink-ext { display: none; }
+  .side-sub, .side-group, .side-service-name, .side-service-port, .side-ai-lbl, .side-ai-val, .side-applink-name, .side-applink-ext, .side-logo { display: none; }
   .side-item { justify-content: center; padding: 10px; font-size: 0; }
   .side-icon { opacity: 1; }
   .side-service { justify-content: center; padding: 6px; }

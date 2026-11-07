@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>HealthConnect — demo</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -29,7 +30,8 @@
     html, body { margin: 0; background: var(--bg); color: var(--text); font-family: "Instrument Sans", system-ui, sans-serif; min-height: 100vh; }
     body { display: flex; flex-direction: column; align-items: center; padding: 48px 24px 72px; gap: 32px; }
 
-    .hero { max-width: 720px; text-align: center; display: flex; flex-direction: column; gap: 14px; }
+    .hero { max-width: 720px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+    .logo { display: block; margin-bottom: 4px; }
     .brand {
       font-family: "Instrument Serif", serif;
       font-weight: 400;
@@ -136,6 +138,7 @@
 <body>
 
   <div class="hero">
+    <img class="logo" src="/logo.svg" width="96" height="48" alt="HealthConnect" />
     <span class="pill"><span class="dot"></span>Live demo</span>
     <h1 class="brand">Health<em>Connect</em></h1>
     <p class="tagline">
