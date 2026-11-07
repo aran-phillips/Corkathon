@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HealthConnect — demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    :root {
+      --bg: #0b0d12;
+      --card: #141821;
+      --card-hover: #1a1f2b;
+      --border: #242a37;
+      --border-strong: #353d4d;
+      --text: #e7eaf0;
+      --text-muted: #8691a4;
+      --text-dim: #5a6373;
+      --accent: #4ba3c7;
+      --accent-ink: #0b0d12;
+      --ok: #26d07c;
+      --warn: #f0c419;
+    }
+    * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+    html, body { margin: 0; background: var(--bg); color: var(--text); font-family: "Instrument Sans", system-ui, sans-serif; min-height: 100vh; }
+    body { display: flex; flex-direction: column; align-items: center; padding: 48px 24px 72px; gap: 32px; }
+
+    .hero { max-width: 720px; text-align: center; display: flex; flex-direction: column; gap: 14px; }
+    .brand {
+      font-family: "Instrument Serif", serif;
+      font-weight: 400;
+      font-size: 48px;
+      line-height: 1;
+      letter-spacing: -0.02em;
+    }
+    .brand em { font-style: italic; color: var(--accent); }
+    .tagline { font-size: 16px; color: var(--text-muted); line-height: 1.55; }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      align-self: center;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 5px 11px;
+      border-radius: 999px;
+      background: rgba(75, 163, 199, 0.12);
+      color: var(--accent);
+      border: 1px solid rgba(75, 163, 199, 0.28);
+    }
+    .pill .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 3px rgba(38, 208, 124, 0.18); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(260px, 320px));
+      gap: 16px;
+      width: 100%;
+      max-width: 672px;
+    }
+    @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+
+    .card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 20px 20px 22px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      color: var(--text);
+      text-decoration: none;
+      transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+    }
+    .card:hover {
+      background: var(--card-hover);
+      border-color: var(--border-strong);
+      transform: translateY(-1px);
+    }
+    .card-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .card-mark {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 13px;
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .card-title { font-size: 15px; font-weight: 600; letter-spacing: -0.005em; }
+    .card-sub   { font-size: 12.5px; color: var(--text-muted); line-height: 1.5; }
+    .card-foot  { display: flex; justify-content: space-between; align-items: center; margin-top: 2px; font-size: 11px; }
+    .card-path  { font-family: "JetBrains Mono", monospace; color: var(--text-dim); }
+    .card-arrow { color: var(--text-muted); transition: transform 0.18s ease, color 0.18s ease; }
+    .card:hover .card-arrow { transform: translateX(3px); color: var(--text); }
+
+    .flow {
+      max-width: 672px;
+      width: 100%;
+      padding: 16px 20px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      font-size: 12.5px;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+    .flow strong { color: var(--text); font-weight: 600; }
+    .flow code { font-family: "JetBrains Mono", monospace; font-size: 11.5px; color: var(--accent); background: rgba(75, 163, 199, 0.08); padding: 1px 6px; border-radius: 4px; }
+
+    footer {
+      font-size: 11.5px;
+      color: var(--text-dim);
+      max-width: 672px;
+      text-align: center;
+      line-height: 1.6;
+    }
+    footer a { color: var(--text-muted); text-decoration: none; }
+    footer a:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+
+  <div class="hero">
+    <span class="pill"><span class="dot"></span>Live demo</span>
+    <h1 class="brand">Health<em>Connect</em></h1>
+    <p class="tagline">
+      Consent-first wearable → hospital pipeline.
+      Patient controls what's shared, Claude translates to FHIR,
+      the hospital EHR shows it alongside in-clinic vitals.
+    </p>
+  </div>
+
+  <div class="grid">
+    <a class="card" href="/whoop">
+      <div class="card-head">
+        <div class="card-mark">W</div>
+        <div class="card-title">WHOOP phone</div>
+      </div>
+      <div class="card-sub">The patient view. Toggle consent per-metric, hit SAVE &amp; SYNC to drive the pipeline.</div>
+      <div class="card-foot"><span class="card-path">/whoop</span><span class="card-arrow">→</span></div>
+    </a>
+
+    <a class="card" href="/admin/">
+      <div class="card-head">
+        <div class="card-mark">A</div>
+        <div class="card-title">Admin dashboard</div>
+      </div>
+      <div class="card-sub">Pipeline health, compatibility matrix, transactions, telemetry feed, stored hospital records.</div>
+      <div class="card-foot"><span class="card-path">/admin</span><span class="card-arrow">→</span></div>
+    </a>
+
+    <a class="card" href="/operator">
+      <div class="card-head">
+        <div class="card-mark">G</div>
+        <div class="card-title">Gateway operator</div>
+      </div>
+      <div class="card-sub">Engineer view. Pick a patient, inspect raw snapshot vs FHIR bundle vs hospital response.</div>
+      <div class="card-foot"><span class="card-path">/operator</span><span class="card-arrow">→</span></div>
+    </a>
+
+    <a class="card" href="/demo/hospital-integration.html">
+      <div class="card-head">
+        <div class="card-mark">H</div>
+        <div class="card-title">Clinician EHR</div>
+      </div>
+      <div class="card-sub">Mock hospital EHR — WHOOP data appears in the flowsheet, tagged patient-generated.</div>
+      <div class="card-foot"><span class="card-path">/demo/hospital-integration</span><span class="card-arrow">→</span></div>
+    </a>
+  </div>
+
+  <div class="flow">
+    <strong>The journey:</strong> open the phone, toggle consent, hit SYNC.
+    The <code>/sync</code> call runs a rule-based translator client-side,
+    writes a FHIR Bundle to local hospital storage, and emits SSE telemetry
+    the admin + operator pages pick up. Records persist in <code>localStorage</code>
+    so a refresh doesn't wipe the demo. Click <strong>Clinician view</strong>
+    in the drawer to see the data land in the mock EHR.
+  </div>
+
+  <footer>
+    This static deploy runs entirely in the browser — no backend, no live Claude call.
+    Full pipeline (whoop → gateway → hospital with real Claude Opus 4.7 translation) lives in the
+    <a href="https://github.com/aran-phillips/Corkathon" target="_blank" rel="noopener">GitHub repo</a>
+    behind <code>npm run dev</code>.
+  </footer>
+
+</body>
+</html>

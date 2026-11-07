@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>HealthConnect — Admin Console</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#14181F" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="/js/mock-backend.js"></script>
+  </head>
+  <body data-section="overview">
+    <div class="shell">
+      <!-- ─── Sidebar ─────────────────────────────────── -->
+      <aside class="sidebar">
+        <div class="side-brand">
+          <span class="side-mark">HealthConnect</span>
+          <span class="side-sub">Admin console</span>
+        </div>
+
+        <nav class="side-nav" aria-label="main navigation">
+          <div class="side-group">Overview</div>
+          <button class="side-item" data-nav="overview">
+            <span class="side-icon" aria-hidden="true">
+              <svg viewBox="0 0 16 16" width="16" height="16"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>
+            </span>
+            Dashboard
+          </button>
+          <button class="side-item" data-nav="compatibility">
+            <span class="side-icon" aria-hidden="true">
+              <svg viewBox="0 0 16 16" width="16" height="16"><path d="M2 8h12M8 2v12"/><circle cx="8" cy="8" r="2"/></svg>
+            </span>
+            Compatibility
+          </button>
+
+          <div class="side-group">APIs</div>
+          <button class="side-item" data-nav="whoop">
+            <span class="side-icon side-icon-a">A</span>
+            Whoop
+          </button>
+          <button class="side-item" data-nav="gateway">
+            <span class="side-icon side-icon-a">B</span>
+            Gateway
+          </button>
+          <button class="side-item" data-nav="hospital">
+            <span class="side-icon side-icon-a">C</span>
+            Hospital
+          </button>
+
+          <div class="side-group">Observability</div>
+          <button class="side-item" data-nav="transactions">
+            <span class="side-icon" aria-hidden="true">
+              <svg viewBox="0 0 16 16" width="16" height="16"><rect x="2" y="3" width="12" height="10" rx="1"/><line x1="2" y1="7" x2="14" y2="7" stroke="currentColor" stroke-width="1"/><line x1="6" y1="3" x2="6" y2="13" stroke="currentColor" stroke-width="1"/></svg>
+            </span>
+            Transactions
+          </button>
+          <button class="side-item" data-nav="telemetry">
+            <span class="side-icon" aria-hidden="true">
+              <svg viewBox="0 0 16 16" width="16" height="16"><line x1="2" y1="4" x2="14" y2="4" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="8" x2="10" y2="8" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="12" x2="12" y2="12" stroke="currentColor" stroke-width="1.5"/></svg>
+            </span>
+            Telemetry
+          </button>
+        </nav>
+
+        <div class="side-footer">
+          <div class="side-group">Open app</div>
+          <a class="side-applink" href="/whoop" target="_blank" rel="noopener" data-applink="whoop">
+            <span class="side-applink-mark">W</span>
+            <span class="side-applink-name">WHOOP phone</span>
+            <span class="side-applink-ext" aria-hidden="true">↗</span>
+          </a>
+          <a class="side-applink" href="/operator" target="_blank" rel="noopener" data-applink="operator">
+            <span class="side-applink-mark">G</span>
+            <span class="side-applink-name">Gateway operator</span>
+            <span class="side-applink-ext" aria-hidden="true">↗</span>
+          </a>
+
+          <div class="side-group">Services</div>
+          <div class="side-service">
+            <span class="dot" data-health="whoop"></span>
+            <span class="side-service-name">Whoop</span>
+            <span class="side-service-port">:4001</span>
+          </div>
+          <div class="side-service">
+            <span class="dot" data-health="gateway"></span>
+            <span class="side-service-name">Gateway</span>
+            <span class="side-service-port">:4002</span>
+          </div>
+          <div class="side-service">
+            <span class="dot" data-health="hospital"></span>
+            <span class="side-service-name">Hospital</span>
+            <span class="side-service-port">:4003</span>
+          </div>
+          <div class="side-ai">
+            <span class="side-ai-dot" data-ai-ok="false"></span>
+            <span class="side-ai-lbl">AI translator</span>
+            <span class="side-ai-val" id="ai-status">—</span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- ─── Main ────────────────────────────────────── -->
+      <main class="main">
+        <header class="topbar">
+          <div class="topbar-left">
+            <h1 class="topbar-title" id="section-title">Dashboard</h1>
+            <span class="topbar-sub" id="section-sub">Live status for the Whoop → Hospital pipeline.</span>
+          </div>
+          <div class="topbar-right">
+            <div class="session">
+              <span class="session-lbl">Session</span>
+              <span class="session-val" id="clock">—</span>
+            </div>
+            <button id="syncAll" class="btn-primary" type="button">Sync all</button>
+          </div>
+        </header>
+
+        <!-- ─── Overview ────────────────────────────── -->
+        <section class="view" data-view="overview">
+          <div class="kpi-grid">
+            <div class="kpi">
+              <div class="kpi-lbl">Patients enrolled</div>
+              <div class="kpi-val" data-kpi="patients">—</div>
+              <div class="kpi-sub">from the Whoop mock</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-lbl">Syncs this session</div>
+              <div class="kpi-val" data-kpi="syncs">—</div>
+              <div class="kpi-sub">pipeline runs</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-lbl">Records on file</div>
+              <div class="kpi-val" data-kpi="records">—</div>
+              <div class="kpi-sub">in hospital store</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-lbl">Alerts fired</div>
+              <div class="kpi-val kpi-val-warn" data-kpi="alerts">—</div>
+              <div class="kpi-sub">from hospital alert rules</div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <span class="panel-title">Pipeline</span>
+              <span class="panel-aux">
+                <span class="pill" id="pipeline-status">Idle</span>
+              </span>
+            </div>
+            <svg
+              id="pipeline-svg"
+              viewBox="0 0 1000 200"
+              preserveAspectRatio="xMidYMid meet"
+              data-stage="idle"
+            >
+              <line class="rail-main" x1="90" y1="100" x2="910" y2="100" />
+              <line class="segment seg-1" x1="90" y1="100" x2="500" y2="100" />
+              <line class="segment seg-2" x1="500" y1="100" x2="910" y2="100" />
+
+              <g class="node node-whoop" transform="translate(90,100)">
+                <rect x="-30" y="-24" width="60" height="48" rx="6" class="node-box" />
+                <text class="node-letter" y="5" text-anchor="middle">A</text>
+                <text class="node-caption" y="-38" text-anchor="middle">Whoop</text>
+                <text class="node-sub" y="50" text-anchor="middle">Fetch snapshot</text>
+              </g>
+              <g class="node node-gateway" transform="translate(500,100)">
+                <rect x="-34" y="-24" width="68" height="48" rx="24" class="node-box" />
+                <text class="node-letter" y="5" text-anchor="middle">B</text>
+                <text class="node-caption" y="-38" text-anchor="middle">Gateway</text>
+                <text class="node-sub" y="50" text-anchor="middle">Consent + translate</text>
+              </g>
+              <g class="node node-hospital" transform="translate(910,100)">
+                <rect x="-30" y="-24" width="60" height="48" rx="6" class="node-box" />
+                <text class="node-letter" y="5" text-anchor="middle">C</text>
+                <text class="node-caption" y="-38" text-anchor="middle">Hospital</text>
+                <text class="node-sub" y="50" text-anchor="middle">Validate + store</text>
+              </g>
+
+              <g class="packet-group packet-1"><circle r="4" cy="100" cx="90" /></g>
+              <g class="packet-group packet-2"><circle r="3" cy="100" cx="90" fill-opacity="0.6" /></g>
+              <g class="packet-group packet-3"><circle r="2" cy="100" cx="90" fill-opacity="0.35" /></g>
+            </svg>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <span class="panel-title">Latest trace</span>
+              <span class="panel-aux" id="trace-meta">No sync yet</span>
+            </div>
+            <div class="trace-stages">
+              <div class="trace-stage">
+                <div class="trace-lbl">
+                  <span class="trace-num">01</span>
+                  <span class="trace-title">Snapshot</span>
+                  <span class="trace-badge" data-badge="whoop">—</span>
+                </div>
+                <pre class="trace-body" data-trace="snapshot"><span class="dim">Run a sync to populate.</span></pre>
+              </div>
+              <div class="trace-stage">
+                <div class="trace-lbl">
+                  <span class="trace-num">02</span>
+                  <span class="trace-title">Bundle</span>
+                  <span class="trace-badge" data-badge="translate">—</span>
+                </div>
+                <pre class="trace-body" data-trace="bundle"><span class="dim">—</span></pre>
+              </div>
+              <div class="trace-stage">
+                <div class="trace-lbl">
+                  <span class="trace-num">03</span>
+                  <span class="trace-title">Receipt</span>
+                  <span class="trace-badge" data-badge="hospital">—</span>
+                </div>
+                <pre class="trace-body" data-trace="hospital"><span class="dim">—</span></pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <span class="panel-title">Recent activity</span>
+              <span class="panel-aux">
+                <a class="panel-link" data-nav="telemetry" href="#">Open telemetry →</a>
+              </span>
+            </div>
+            <div class="activity" id="activity">
+              <div class="activity-empty">No activity yet.</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ─── Compatibility ─────────────────────── -->
+        <section class="view" data-view="compatibility">
+          <div class="panel">
+            <div class="panel-head">
+              <span class="panel-title">Compatibility matrix</span>
+              <span class="panel-aux">
+                <label class="select-inline">
+                  <span>Patient</span>
+                  <select id="compat-patient"></select>
+                </label>
+              </span>
+            </div>
+            <p class="panel-note">
+              <em>Walks every Whoop field through consent, the translator, and the hospital validator. A row is <strong>blocked</strong> if something stops it from reaching the hospital — this is where you'll see mismatches.</em>
+            </p>
+            <div id="compat-summary" class="compat-summary"></div>
+            <div id="compat-matrix"></div>
+          </div>
+        </section>
+
+        <!-- ─── Whoop API ────────────────────────────── -->
+        <section class="view" data-view="whoop">
+          <div class="panel api-intro">
+            <div class="api-head">
+              <span class="api-letter">A</span>
+              <div>
+                <h2 class="api-name">Whoop API</h2>
+                <p class="api-blurb">Mock wearable source. Serves the latest Whoop-style snapshot plus five days of history per patient. In production this would be the real Whoop OAuth integration.</p>
+              </div>
+              <span class="api-port">localhost:4001</span>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><span class="panel-title">Endpoints</span></div>
+            <table class="endpoints-table">
+              <thead><tr><th>Verb</th><th>Path</th><th>Purpose</th></tr></thead>
+              <tbody>
+                <tr><td><code class="verb">GET</code></td><td><code>/patients</code></td><td>List enrolled patients and scenarios</td></tr>
+                <tr><td><code class="verb">GET</code></td><td><code>/patients/:id/snapshot</code></td><td>Latest reading for one patient</td></tr>
+                <tr><td><code class="verb">GET</code></td><td><code>/patients/:id/history</code></td><td>Five-day history</td></tr>
+                <tr><td><code class="verb">GET</code></td><td><code>/patients/:id/recovery</code></td><td>Recovery slice only</td></tr>
+                <tr><td><code class="verb">GET</code></td><td><code>/patients/:id/sleep</code></td><td>Sleep slice only</td></tr>
+                <tr><td><code class="verb">GET</code></td><td><code>/patients/:id/cycle</code></td><td>Cycle slice only</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <span class="panel-title">Patients</span>
+              <span class="panel-aux" id="patients-count">—</span>
+            </div>
+            <table class="patients-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Scenario</th>
+                  <th>Consent</th>
+                  <th>Last sync</th>
+                  <th class="align-right">Action</th>
+                </tr>
+              </thead>
+              <tbody id="patients-tbody">
+                <tr><td colspan="6" class="t-empty">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <span class="panel-title">Snapshot inspector</span>
+              <span class="panel-aux">
+                <label class="select-inline">
+                  <span>Patient</span>
+                  <select id="whoop-patient"></select>
+                </label>
+              </span>
+            </div>
+            <pre class="raw-body" id="whoop-raw"><span class="dim">Pick a patient to view raw snapshot.</span></pre>
+          </div>
+        </section>
+
+        <!-- ─── Gateway API ─────────────────────────── -->
+        <section class="view" data-view="gateway">
+          <div class="panel api-intro">
+            <div class="api-head">
+              <span class="api-letter">B</span>
+              <div>
+                <h2 class="api-name">Gateway API</h2>
+                <p class="api-blurb">Consent filter + translator. Pulls a Whoop snapshot, drops any field the patient hasn't consented to, calls Claude Opus 4.7 to emit a FHIR transaction Bundle (with a rule-based fallback), and posts it to the hospital. Telemetry events stream over SSE.</p>
+              </div>
+              <span class="api-port">localhost:4002</span>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><span class="panel-title">Endpoints</span></div>
+            <table class="endpoints-table">
+              <thead><tr><th>Verb</th><th>Path</th><th>Purpose</th></tr></thead>
+              <tbody>
+                <tr><td><code class="verb verb-post">POST</code></td><td><code>/sync/:patientId</code></td><td>Run the full pipeline for one patient</td></tr>
+                <tr><td><code class="verb">GET</code></td><td><code>/compatibility/:patientId</code></td><td>Compatibility matrix with blockers</td></tr>
+                <tr><td><code class="verb">GET</code></td><td><code>/mapping</code></td><td>LOINC + unmapped field reference</td></tr>
+                <tr><td><code class="verb">GET</code></td><td><code>/consent/:patientId</code></td><td>Current consent list</td></tr>
+                <tr><td><code class="verb">GET</code></td><td><code>/events</code></td><td>Recent telemetry (paginated snapshot)</td></tr>
+                <tr><td><code class="verb">GET</code></td><td><code>/events/stream</code></td><td>Live telemetry over SSE</td></tr>
+                <tr><td><code class="verb">GET</code></td><td><code>/health/all</code></td><td>Health probe across all services</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <span class="panel-title">LOINC mapping</span>
+              <span class="panel-aux">Whoop field → FHIR Observation</span>
+            </div>
+            <table class="mapping-table" id="mapping-table">
+              <thead>
+                <tr>
+                  <th>Whoop field</th>
+                  <th>Source path</th>
+                  <th>LOINC code</th>
+                  <th>Display</th>
+                  <th>Unit</th>
+                </tr>
+              </thead>
+              <tbody id="mapping-tbody"><tr><td colspan="5" class="t-empty">Loading…</td></tr></tbody>
+            </table>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <span class="panel-title">Unmapped fields</span>
+              <span class="panel-aux">Present in Whoop · not translated</span>
+            </div>
+            <table class="mapping-table" id="unmapped-table">
+              <thead>
+                <tr>
+                  <th>Source path</th>
+                  <th>Reason</th>
+                </tr>
+              </thead>
+              <tbody id="unmapped-tbody"><tr><td colspan="2" class="t-empty">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ─── Hospital API ────────────────────────── -->
+        <section class="view" data-view="hospital">
+          <div class="panel api-intro">
+            <div class="api-head">
+              <span class="api-letter">C</span>
+              <div>
+                <h2 class="api-name">Hospital API</h2>
+                <p class="api-blurb">FHIR receiver. Validates incoming transaction Bundles, stores Observations in memory, and runs threshold rules (high resting HR, low HRV, low SpO₂, poor sleep efficiency) to surface clinical alerts.</p>
+              </div>
+              <span class="api-port">localhost:4003</span>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><span class="panel-title">Endpoints</span></div>
+            <table class="endpoints-table">
+              <thead><tr><th>Verb</th><th>Path</th><th>Purpose</th></tr></thead>
+              <tbody>
+                <tr><td><code class="verb verb-post">POST</code></td><td><code>/fhir/Bundle</code></td><td>Receive a FHIR transaction Bundle</td></tr>
+                <tr><td><code class="verb">GET</code></td><td><code>/records</code></td><td>All stored records with alerts</td></tr>
+                <tr><td><code class="verb">GET</code></td><td><code>/records/:id</code></td><td>One record</td></tr>
+                <tr><td><code class="verb">GET</code></td><td><code>/patients/:ref/records</code></td><td>Records for one patient</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <span class="panel-title">Alert rules</span>
+              <span class="panel-aux">In <code>hospital/alerts.js</code></span>
+            </div>
+            <table class="mapping-table">
+              <thead><tr><th>LOINC</th><th>Observation</th><th>Threshold</th><th>Severity</th></tr></thead>
+              <tbody>
+                <tr><td><code>40443-4</code></td><td>Resting heart rate</td><td>≥ 80 /min</td><td><span class="t-tag" data-tag="heart-risk">warning</span></td></tr>
+                <tr><td><code>80404-7</code></td><td>HRV (SDNN)</td><td>≤ 25 ms</td><td><span class="t-tag" data-tag="heart-risk">warning</span></td></tr>
+                <tr><td><code>59408-5</code></td><td>Oxygen saturation</td><td>≤ 92 %</td><td><span class="t-tag" data-tag="heart-risk">warning</span></td></tr>
+                <tr><td><code>93829-0</code></td><td>Sleep efficiency</td><td>≤ 75 %</td><td><span class="t-tag" data-tag="heart-risk">warning</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <span class="panel-title">Stored records</span>
+              <span class="panel-aux" id="records-count">—</span>
+            </div>
+            <table class="records-table">
+              <thead>
+                <tr>
+                  <th>Record</th>
+                  <th>Patient</th>
+                  <th>Received</th>
+                  <th>Observations</th>
+                  <th>Alerts</th>
+                </tr>
+              </thead>
+              <tbody id="records-tbody">
+                <tr><td colspan="5" class="t-empty">No records yet.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ─── Transactions ────────────────────────── -->
+        <section class="view" data-view="transactions">
+          <div class="panel">
+            <div class="panel-head">
+              <span class="panel-title">Transactions</span>
+              <span class="panel-aux">
+                <label class="select-inline">
+                  <span>Patient</span>
+                  <select id="tx-filter-patient">
+                    <option value="all">All</option>
+                  </select>
+                </label>
+                <label class="select-inline">
+                  <span>Hospital</span>
+                  <select id="tx-filter-hospital">
+                    <option value="all">All</option>
+                  </select>
+                </label>
+              </span>
+            </div>
+            <p class="panel-note">
+              <em>Every FHIR Bundle the hospital has accepted, grouped per patient and per hospital. Expand a transaction to see the Observations that were sent.</em>
+            </p>
+            <div class="tx-summary" id="tx-summary"></div>
+            <div id="tx-list" class="tx-list">
+              <div class="activity-empty">Loading…</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ─── Telemetry ───────────────────────────── -->
+        <section class="view" data-view="telemetry">
+          <div class="panel">
+            <div class="panel-head">
+              <span class="panel-title">Telemetry</span>
+              <span class="panel-aux legend">
+                <em class="lg-ok">● ok</em>
+                <em class="lg-warn">● warn</em>
+                <em class="lg-err">● error</em>
+                <em class="lg-info">● info</em>
+              </span>
+            </div>
+            <div class="log-controls">
+              <div class="log-filters">
+                <label>
+                  <span class="filter-lbl">Level</span>
+                  <select id="filter-level">
+                    <option value="all">All</option>
+                    <option value="ok">Ok</option>
+                    <option value="warn">Warn</option>
+                    <option value="error">Error</option>
+                    <option value="info">Info</option>
+                  </select>
+                </label>
+                <label>
+                  <span class="filter-lbl">Patient</span>
+                  <select id="filter-patient">
+                    <option value="all">All</option>
+                  </select>
+                </label>
+              </div>
+              <button id="clearLog" class="btn-ghost" type="button">Clear</button>
+            </div>
+            <div id="log" class="log" tabindex="0" aria-live="polite">
+              <div class="log-empty">No events yet.</div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js" type="module"></script>
+  </body>
+</html>
