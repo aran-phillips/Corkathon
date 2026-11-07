@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WatchLink Gateway — operator console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#eef1f5; --card:#fff; --ink:#18212f; --ink2:#4a5568; --ink3:#8590a2; --line:#dde3ea;
+  --navy:#16324f; --navy2:#21466d; --teal:#0e8a7d; --teal-bg:#e3f4f1;
+  --red:#c0362c; --red-bg:#fdecea; --amber:#a86400; --amber-bg:#fff4dd; --blue:#2463b5; --blue-bg:#e7f0fb;
+  --mono:'IBM Plex Mono',ui-monospace,monospace; --sans:'IBM Plex Sans',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 var(--sans)}
+button{font:inherit;cursor:pointer}
+select{font:inherit}
+
+.top{display:flex;align-items:center;gap:16px;padding:12px 20px;background:#fff;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.top h1{font-size:16px;margin:0;font-weight:600}
+.top h1 small{font-weight:400;color:var(--ink3);margin-left:8px}
+.top .sp{flex:1}
+.pill{display:inline-flex;gap:6px;align-items:center;font-size:12px;padding:5px 10px;background:#f4f6f9;border-radius:999px;color:var(--ink2)}
+.pill b{color:var(--ink)}
+.pill.ok{background:var(--teal-bg);color:#0a6158}
+.pill.off{background:var(--amber-bg);color:var(--amber)}
+
+/* flow strip */
+.flow{display:flex;align-items:center;gap:0;padding:14px 20px;background:#fff;border-bottom:1px solid var(--line);overflow-x:auto}
+.fnode{min-width:160px;padding:9px 13px;border:1px solid var(--line);border-radius:8px;background:#fafbfc;transition:all .25s}
+.fnode b{display:block;font-size:13px;font-weight:600}
+.fnode span{font-size:11.5px;color:var(--ink3)}
+.fnode.on{border-color:var(--teal);background:var(--teal-bg);box-shadow:0 0 0 3px rgba(14,138,125,.12)}
+.flink{flex:1;min-width:90px;height:34px;position:relative;margin:0 6px}
+.flink::before{content:"";position:absolute;left:0;right:0;top:12px;border-top:2px dashed #c7d0db}
+.flink em{position:absolute;left:0;right:0;top:17px;text-align:center;font-style:normal;font:11px var(--mono);color:var(--ink3)}
+.flink i{position:absolute;left:0;top:7px;width:12px;height:12px;border-radius:50%;background:var(--teal);opacity:0}
+.flink.go i{animation:travel .7s ease-in-out}
+@keyframes travel{0%{left:0;opacity:1}90%{opacity:1}100%{left:calc(100% - 12px);opacity:0}}
+
+.main{display:grid;grid-template-columns:280px minmax(0,1fr) 340px;gap:16px;padding:20px;align-items:start}
+@media(max-width:1200px){.main{grid-template-columns:1fr}}
+
+.card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px 18px;box-shadow:0 1px 3px rgba(22,50,79,.04)}
+.card + .card{margin-top:14px}
+.card h2{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--ink)}
+.card h2 small{font-weight:400;color:var(--ink3);margin-left:6px;font-size:12px}
+
+/* patients */
+.patients{list-style:none;margin:0;padding:0}
+.patients li{padding:10px 12px;border:1px solid transparent;border-radius:8px;margin-bottom:4px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all 120ms}
+.patients li:hover{background:#f4f6f9}
+.patients li.on{background:var(--teal-bg);border-color:var(--teal);color:var(--ink)}
+.patients li .pid{font:11.5px var(--mono);color:var(--ink3);flex:none}
+.patients li .pname{font-size:13.5px;font-weight:500;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.patients li .tag{font-size:10.5px;padding:2px 7px;border-radius:999px;background:#eef0f3;color:var(--ink2);flex:none}
+.patients li .tag.hr{background:var(--amber-bg);color:var(--amber)}
+.patients li .tag.st{background:var(--teal-bg);color:#0a6158}
+.patients li .tag.rc{background:var(--blue-bg);color:var(--blue)}
+
+/* inspector */
+.insp-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+.insp-head .pname{font-size:16px;font-weight:600}
+.insp-head .pname small{font:12px var(--mono);color:var(--ink3);font-weight:400;margin-left:8px}
+.primary{padding:9px 18px;background:var(--teal);color:#fff;border:0;border-radius:8px;font-weight:600;font-size:13.5px}
+.primary:hover{background:#0a6f64}
+.primary:disabled{opacity:.5;cursor:not-allowed}
+
+.sides{display:grid;grid-template-columns:1fr 32px 1fr;gap:10px;align-items:stretch}
+.side{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fbfcfd;display:flex;flex-direction:column;min-height:220px}
+.side-h{padding:7px 12px;background:#f4f6f9;border-bottom:1px solid var(--line);font-size:11.5px;color:var(--ink2);font-weight:500;display:flex;justify-content:space-between;align-items:center}
+.side-h .badge{font:10.5px var(--mono);padding:2px 7px;border-radius:999px;background:#fff;border:1px solid var(--line);color:var(--ink3)}
+.side-h .badge.ok{background:var(--teal-bg);color:#0a6158;border-color:transparent}
+.side-h .badge.warn{background:var(--amber-bg);color:var(--amber);border-color:transparent}
+.side-h .badge.err{background:var(--red-bg);color:var(--red);border-color:transparent}
+.side pre{margin:0;padding:12px;font:11.5px/1.5 var(--mono);color:var(--ink2);flex:1;overflow:auto;max-height:280px;white-space:pre-wrap;word-break:break-word}
+.side .k{color:#8d2db5}.side .s{color:#0a6158}.side .n{color:var(--amber)}.side .b{color:var(--blue)}.side .dim{color:var(--ink3);font-style:italic;font-family:var(--sans)}
+.sides .arrow{display:flex;align-items:center;justify-content:center;color:var(--ink3);font-size:18px}
+
+.consent-chips{display:flex;flex-wrap:wrap;gap:4px;margin:10px 0 0}
+.consent-chips span{font:11px var(--mono);padding:2px 8px;border-radius:999px;background:#f4f6f9;color:var(--ink2)}
+.consent-chips span.blocked{background:var(--amber-bg);color:var(--amber);text-decoration:line-through}
+
+.sendStatus{margin-top:10px;font-size:12.5px;min-height:18px}
+.sendStatus.ok{color:#0a6158}
+.sendStatus.err{color:var(--red)}
+.sendStatus small{color:var(--ink3);margin-left:8px}
+
+/* feed */
+.feed{font-size:12.5px;max-height:400px;overflow:auto}
+.feed-row{display:grid;grid-template-columns:60px 56px 1fr;gap:10px;padding:7px 2px;border-bottom:1px dashed #edf0f3;align-items:center}
+.feed-row:last-child{border-bottom:none}
+.feed-ts{font:11px var(--mono);color:var(--ink3)}
+.feed-lv{font-size:10.5px;padding:2px 7px;border-radius:999px;text-align:center;font-weight:500}
+.feed-lv.ok{background:var(--teal-bg);color:#0a6158}
+.feed-lv.warn{background:var(--amber-bg);color:var(--amber)}
+.feed-lv.error{background:var(--red-bg);color:var(--red)}
+.feed-lv.info{background:var(--blue-bg);color:var(--blue)}
+.feed-msg{color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.feed-empty{padding:20px;text-align:center;color:var(--ink3);font-style:italic}
+
+/* mapping */
+.mtable{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:4px}
+.mtable th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink3);font-weight:500;padding:8px 6px;border-bottom:1px solid var(--line)}
+.mtable td{padding:9px 6px;border-bottom:1px solid var(--line);color:var(--ink)}
+.mtable tr:last-child td{border-bottom:none}
+.mtable code{font:11.5px var(--mono);background:#f4f6f9;padding:1px 6px;border-radius:4px;color:var(--ink)}
+.mtable tr.unmapped td{color:var(--ink2)}
+.mtable tr.unmapped td:first-child{color:var(--ink3);font-style:italic}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <h1>WatchLink Gateway <small>operator console · :4002</small></h1>
+  <div class="sp"></div>
+  <span class="pill" id="aiPill">AI translator: <b id="aiLbl">—</b></span>
+  <span class="pill" id="cnPill">Events: <b id="cnLbl">—</b></span>
+</div>
+
+<div class="flow">
+  <div class="fnode"><b>Wearable source</b><span>WHOOP mock · :4001</span></div>
+  <div class="flink" id="link1"><em>GET snapshot</em><i></i></div>
+  <div class="fnode on"><b>WatchLink gateway</b><span>consent + translate · :4002</span></div>
+  <div class="flink" id="link2"><em>POST Bundle</em><i></i></div>
+  <div class="fnode"><b>Hospital FHIR</b><span>validate + store · :4003</span></div>
+</div>
+
+<div class="main">
+  <aside>
+    <div class="card">
+      <h2>Patients <small id="patCount"></small></h2>
+      <ul class="patients" id="patients"><li class="feed-empty">Loading…</li></ul>
+    </div>
+  </aside>
+
+  <main>
+    <div class="card">
+      <div class="insp-head">
+        <div class="pname" id="pname">Pick a patient on the left</div>
+        <button class="primary" id="translateBtn" disabled>Translate →</button>
+      </div>
+      <div class="sides">
+        <div class="side">
+          <div class="side-h">Whoop snapshot <span class="badge" id="snapBadge">—</span></div>
+          <pre id="snap"><span class="dim">Snapshot appears here.</span></pre>
+        </div>
+        <div class="arrow">→</div>
+        <div class="side">
+          <div class="side-h">FHIR Bundle <span class="badge" id="bundleBadge">—</span></div>
+          <pre id="bundle"><span class="dim">Click Translate to build + post the Bundle.</span></pre>
+        </div>
+      </div>
+      <div class="consent-chips" id="consentChips"></div>
+      <div class="sendStatus" id="sendStatus"></div>
+    </div>
+
+    <div class="card">
+      <h2>LOINC mapping <small>Whoop field → FHIR Observation</small></h2>
+      <table class="mtable">
+        <thead><tr><th>Field</th><th>Source path</th><th>LOINC</th><th>Unit</th></tr></thead>
+        <tbody id="mapBody"><tr><td colspan="4" class="feed-empty">Loading…</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Unmapped fields <small>present in Whoop · not translated</small></h2>
+      <table class="mtable">
+        <thead><tr><th>Source path</th><th>Reason</th></tr></thead>
+        <tbody id="unmapBody"><tr><td colspan="2" class="feed-empty">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </main>
+
+  <aside>
+    <div class="card">
+      <h2>Live translations <small>SSE · gateway /events/stream</small></h2>
+      <div class="feed" id="feed"><div class="feed-empty">No activity yet.</div></div>
+    </div>
+  </aside>
+</div>
+
+<script>
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const state = { patients: [], selected: null, snapshot: null, compat: null, mapping: null, feed: [], eventCount: 0 };
+
+function escape(s){ return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function renderJSON(obj){
+  return escape(JSON.stringify(obj, null, 2))
+    .replace(/"([^"]+)":/g, '<span class="k">"$1":</span>')
+    .replace(/: "([^"]*)"/g, ': <span class="s">"$1"</span>')
+    .replace(/: (-?\d+\.?\d*)/g, ': <span class="n">$1</span>')
+    .replace(/: (true|false|null)/g, ': <span class="b">$1</span>');
+}
+function fmtTime(ts){ return new Date(ts).toLocaleTimeString('en-GB', { hour12: false }); }
+
+async function boot(){
+  await loadMapping();
+  await loadPatients();
+  checkAi();
+  connectSSE();
+  setInterval(checkAi, 5000);
+}
+
+function checkAi(){
+  // Gateway reports AI availability via its /health response (no key = fallback path only).
+  // We infer from events: if any "ai path unavailable" warning appears, AI is off.
+  const unavailable = state.feed.some(e => (e.message || '').includes('ai path unavailable'));
+  const used = state.feed.some(e => e.message === 'ai translator → ' || (e.message || '').match(/^ai translator/));
+  if(unavailable){ $('#aiLbl').textContent = 'rule-based'; $('#aiPill').className = 'pill off'; }
+  else if(used){ $('#aiLbl').textContent = 'claude-opus-4-7'; $('#aiPill').className = 'pill ok'; }
+  else { $('#aiLbl').textContent = state.feed.length ? 'unknown' : 'unknown'; $('#aiPill').className = 'pill'; }
+}
+
+async function loadPatients(){
+  const r = await fetch('/patients');
+  if(!r.ok){ $('#patients').innerHTML = `<li class="feed-empty">Whoop unreachable (${r.status})</li>`; return; }
+  state.patients = await r.json();
+  const ul = $('#patients'); ul.innerHTML = '';
+  for(const p of state.patients){
+    const li = document.createElement('li');
+    li.dataset.id = p.id;
+    const tagClass = p.label === 'heart-risk' ? 'hr' : p.label === 'recovering' ? 'rc' : 'st';
+    li.innerHTML = `
+      <span class="pid">${p.id}</span>
+      <span class="pname">${escape(p.displayName ?? '')}</span>
+      <span class="tag ${tagClass}">${p.label}</span>
+    `;
+    li.onclick = () => selectPatient(p.id);
+    ul.appendChild(li);
+  }
+  $('#patCount').textContent = state.patients.length + ' enrolled';
+}
+
+async function loadMapping(){
+  try{
+    const r = await fetch('/mapping');
+    state.mapping = await r.json();
+    const mb = $('#mapBody'); mb.innerHTML = '';
+    for(const [f, m] of Object.entries(state.mapping.loinc)){
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td><b>${f}</b></td><td><code>${m.source}</code></td><td><code>${m.code}</code></td><td><code>${m.unit}</code></td>`;
+      mb.appendChild(tr);
+    }
+    const ub = $('#unmapBody'); ub.innerHTML = '';
+    for(const u of state.mapping.unmapped){
+      const tr = document.createElement('tr'); tr.className = 'unmapped';
+      tr.innerHTML = `<td><code>${u.source}</code></td><td>${escape(u.reason)}</td>`;
+      ub.appendChild(tr);
+    }
+  }catch(err){
+    $('#mapBody').innerHTML = `<tr><td colspan="4" class="feed-empty">Could not load mapping: ${escape(err)}</td></tr>`;
+  }
+}
+
+async function selectPatient(id){
+  state.selected = id;
+  $$('#patients li').forEach(li => li.classList.toggle('on', li.dataset.id === id));
+  const p = state.patients.find(x => x.id === id);
+  $('#pname').innerHTML = `${escape(p.displayName ?? '')} <small>${id}</small>`;
+  $('#translateBtn').disabled = false;
+
+  const [snapR, compatR] = await Promise.all([
+    fetch(`/whoop/snapshot/${encodeURIComponent(id)}`),
+    fetch(`/compatibility/${encodeURIComponent(id)}`),
+  ]);
+  state.snapshot = snapR.ok ? await snapR.json() : null;
+  state.compat = compatR.ok ? await compatR.json() : null;
+
+  if(state.snapshot){
+    $('#snap').innerHTML = renderJSON(state.snapshot);
+    $('#snapBadge').textContent = 'loaded';
+    $('#snapBadge').className = 'badge ok';
+  }
+
+  const chips = $('#consentChips');
+  if(state.compat){
+    chips.innerHTML = '';
+    for(const f of state.compat.fields){
+      const el = document.createElement('span');
+      el.textContent = f.field + (f.present ? '' : ' (missing)');
+      if(f.status !== 'ok') el.classList.add('blocked');
+      el.title = f.reason;
+      chips.appendChild(el);
+    }
+  }
+
+  $('#bundle').innerHTML = `<span class="dim">Click Translate to build + post the Bundle.</span>`;
+  $('#bundleBadge').textContent = '—';
+  $('#bundleBadge').className = 'badge';
+  $('#sendStatus').textContent = '';
+}
+
+$('#translateBtn').onclick = async () => {
+  if(!state.selected) return;
+  const btn = $('#translateBtn');
+  btn.disabled = true; btn.textContent = 'Translating…';
+  $('#sendStatus').textContent = ''; $('#sendStatus').className = 'sendStatus';
+
+  // Animate both flow links.
+  $('#link1').classList.add('go');
+  setTimeout(() => $('#link1').classList.remove('go'), 700);
+  setTimeout(() => $('#link2').classList.add('go'), 400);
+  setTimeout(() => $('#link2').classList.remove('go'), 1200);
+
+  try {
+    const r = await fetch(`/sync/${encodeURIComponent(state.selected)}`, { method: 'POST' });
+    const data = await r.json();
+    if(data.bundle){
+      $('#bundle').innerHTML = renderJSON(data.bundle);
+      const warn = data.aiError && data.translator === 'rule-based';
+      $('#bundleBadge').textContent = `${data.translator} · ${data.bundle.entry.length} obs`;
+      $('#bundleBadge').className = 'badge ' + (warn ? 'warn' : 'ok');
+    } else {
+      $('#bundleBadge').textContent = 'failed';
+      $('#bundleBadge').className = 'badge err';
+    }
+    const h = data.hospital || {};
+    const alerts = h.alerts?.length ?? 0;
+    const msg = r.ok
+      ? `Accepted: ${h.id ?? ''} · ${h.accepted ?? 0} observations${alerts ? ` · ${alerts} alert${alerts === 1 ? '' : 's'} fired` : ''}`
+      : `Rejected at ${data.stage}: ${data.error || JSON.stringify(data)}`;
+    $('#sendStatus').textContent = msg;
+    $('#sendStatus').className = 'sendStatus ' + (r.ok ? 'ok' : 'err');
+    if(data.aiError){
+      const note = document.createElement('small');
+      note.textContent = `AI unavailable (${data.aiError}); rule-based used.`;
+      $('#sendStatus').appendChild(note);
+    }
+  } catch(err) {
+    $('#sendStatus').textContent = 'Network error: ' + err.message;
+    $('#sendStatus').className = 'sendStatus err';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Translate →';
+  }
+};
+
+function connectSSE(){
+  const es = new EventSource('/events/stream');
+  es.addEventListener('hello', (msg) => {
+    try{
+      const d = JSON.parse(msg.data);
+      (d.recent || []).forEach(pushFeed);
+    }catch{}
+  });
+  es.addEventListener('telemetry', (msg) => {
+    try{ pushFeed(JSON.parse(msg.data)); }catch{}
+  });
+}
+
+function pushFeed(ev){
+  state.feed.unshift(ev);
+  if(state.feed.length > 80) state.feed.pop();
+  state.eventCount++;
+  $('#cnLbl').textContent = state.eventCount;
+  renderFeed();
+  checkAi();
+}
+
+function renderFeed(){
+  const el = $('#feed');
+  if(state.feed.length === 0){ el.innerHTML = `<div class="feed-empty">No activity yet.</div>`; return; }
+  el.innerHTML = '';
+  for(const ev of state.feed){
+    const row = document.createElement('div');
+    row.className = 'feed-row';
+    row.innerHTML = `
+      <span class="feed-ts">${fmtTime(ev.ts)}</span>
+      <span class="feed-lv ${ev.level || 'info'}">${ev.level || 'info'}</span>
+      <span class="feed-msg" title="${escape(ev.message || '')}">${escape(ev.message || '')}</span>
+    `;
+    el.appendChild(row);
+  }
+}
+
+boot();
+</script>
+</body>
+</html>

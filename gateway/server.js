@@ -1,11 +1,18 @@
 import express from "express";
+import path from "path";
+import { fileURLToPath } from "url";
 import { EventEmitter } from "events";
 import { consentFor } from "./consent.js";
 import { translateRuleBased, LOINC_MAPPING, UNMAPPED_WHOOP_FIELDS } from "./translate.js";
 import { translateWithClaude } from "./translate-ai.js";
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 const app = express();
 app.use(express.json({ limit: "1mb" }));
+// Gateway operator dashboard — served from gateway/public so the folder
+// is self-contained in the repo.
+app.use(express.static(path.join(__dirname, "public")));
 
 const port = process.env.PORT || 4002;
 const WHOOP_URL = process.env.WHOOP_URL || "http://localhost:4001";
@@ -313,4 +320,5 @@ app.post("/sync/:patientId", async (req, res) => {
 
 app.listen(port, () => {
   console.log(`[gateway] translator API listening on http://localhost:${port}`);
+  console.log(`[gateway] operator dashboard at http://localhost:${port}/`);
 });
