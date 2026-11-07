@@ -366,6 +366,7 @@ body[data-section="compatibility"] .view[data-view="compatibility"],
 body[data-section="whoop"] .view[data-view="whoop"],
 body[data-section="gateway"] .view[data-view="gateway"],
 body[data-section="hospital"] .view[data-view="hospital"],
+body[data-section="transactions"] .view[data-view="transactions"],
 body[data-section="telemetry"] .view[data-view="telemetry"] {
   display: block;
 }
