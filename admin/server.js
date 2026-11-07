@@ -10,7 +10,15 @@ import { EventEmitter } from "events";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express();
-app.use(express.json({ limit: "1mb" }));
+// Parse JSON bodies — accept FHIR's `application/fhir+json` too, not just
+// `application/json`. Without this, FHIR POSTs arrive as undefined and the
+// hospital rejects them as empty.
+app.use(
+  express.json({
+    limit: "1mb",
+    type: ["application/json", "application/*+json"],
+  })
+);
 app.use(express.static(path.join(__dirname, "public")));
 // Serve the teammate's standalone demos from the repo's /demo directory.
 app.use("/demo", express.static(path.join(__dirname, "..", "demo")));
