@@ -6,15 +6,25 @@ A 3–4 minute live walkthrough. Any team member can run it from this doc.
 
 ## 0 · Setup (do before you go up)
 
-1. Open four terminal tabs — or better, one terminal with the stack running and three browser tabs ready.
-2. In the repo root: `npm run dev` — wait for the `[admin] listening on http://localhost:4000` line.
-3. Open these three browser tabs in this order (left → right):
-   1. **http://localhost:4002/** · the WatchLink patient phone app
-   2. **http://localhost:4000/** · the admin dashboard
-   3. **http://localhost:4000/demo/hospital-integration.html** · the clinician EHR view
-4. On the admin tab: click **Sync all** once to warm the data. Then **Clear** on the Telemetry page so the demo starts from a clean log.
-5. On the hospital EHR tab: scroll down to the flowsheet area so it's already visible.
-6. Zoom browser to a comfortable size (⌘+ once) — the phone app looks best with a bit of extra size.
+1. In the repo root: `npm run dev` — wait for the `[admin] listening on http://localhost:4000` line.
+2. Open these **four** browser tabs in this order (left → right):
+   1. **http://localhost:4002/whoop.html** · WHOOP patient phone app
+   2. **http://localhost:4000/** · HealthConnect admin dashboard
+   3. **http://localhost:4002/operator.html** · gateway operator console
+   4. **http://localhost:4000/#hospital** · hospital stored records
+
+   One-liner on macOS:
+
+   ```bash
+   open "http://localhost:4002/whoop.html" \
+     && open "http://localhost:4000/" \
+     && open "http://localhost:4002/operator.html" \
+     && open "http://localhost:4000/#hospital"
+   ```
+
+3. On the admin tab: click **Sync all** once to warm the data. Then **Clear** on the Telemetry page so the demo starts from a clean log.
+4. The **Clinician view** (mock hospital EHR at `http://localhost:4000/demo/hospital-integration.html`) opens on-demand from the phone's SYNC drawer — no need to pre-open it.
+5. Zoom browser to a comfortable size (⌘+ once) — the phone app looks best with a bit of extra size.
 
 **One-liner sanity check** before you walk on stage:
 
@@ -55,17 +65,21 @@ Point at the toggle rows:
 
 ### Beat 2 · The data journey (still tab 1)
 
-Click **SYNC 3 METRICS WITH HOSPITAL**. The drawer slides up.
+Click **SAVE & SYNC**. The journey drawer slides up from the bottom.
 
-> Look at this — this is the full journey of the data, live. The WatchLink app sent three consented metrics. The Corkathon gateway translated them into three FHIR Observations — that's the format every hospital EHR speaks. Cork University Hospital received them, stored the record, and because Jane's numbers are normal, no clinical alerts fired.
+> Look at this — this is the full journey of the data, live. The WHOOP app sent three consented metrics. The HealthConnect gateway translated them into three FHIR Observations — that's the format every hospital EHR speaks. Cork University Hospital received them, stored the record, and because Jane's numbers are normal, no clinical alerts fired.
 
-Point at the timing on the right:
+Point at the timing on the right of each step:
 
 > Entire round trip, under a second.
 
+Then click **Clinician view** in the drawer footer — opens the mock hospital EHR in a new tab.
+
+> And **here's the clinician end** — a traditional hospital EHR, legacy chrome, flowsheet layout. Jane's resting HR, HRV, and SpO₂ have just landed inside the record, tagged as patient-generated.
+
 ---
 
-### Beat 3 · The operator view (tab 2 — admin dashboard)
+### Beat 3 · The admin dashboard (tab 2 — HealthConnect admin)
 
 Switch to the admin dashboard tab, click **Transactions** in the sidebar.
 
@@ -81,19 +95,29 @@ Click **Compatibility** in the sidebar.
 
 ---
 
-### Beat 4 · The clinician's view (tab 3 — hospital EHR)
+### Beat 4 · The gateway operator view (tab 3 — operator console)
 
-Switch to the hospital EHR tab.
+Switch to the gateway operator tab.
 
-> And here's the other end — a traditional hospital EHR, rendered to look like the systems clinicians already use every day. Legacy chrome, flowsheet layout, clinical alerts.
+> This is the view the engineer on-call sees. Live SSE feed of every stage of the pipeline — WHOOP in, consent filter, translator, hospital out. You click any patient on the left and inspect the raw snapshot, the consent decision, and the resulting FHIR bundle side-by-side.
 
-Scroll to the flowsheet.
+Click a patient and point at the three-column inspector.
 
-> Jane's resting heart rate, HRV, and SpO₂ show up right alongside her in-clinic vitals. **Patient-generated** is clearly tagged — the clinician knows the source, knows it's not clinically validated, but it's now in the record where they actually work.
+> If a sync ever breaks mid-pipeline, this is where you diagnose it — stage-by-stage, with the actual payloads.
 
 ---
 
-### Beat 5 · When it matters (back to tab 1 — phone app, or switch patients)
+### Beat 5 · The clinician end (tab 4 — hospital records)
+
+Switch to the hospital records tab (admin `#hospital`).
+
+> Every bundle the hospital has accepted, with alerts flagged inline. This is the plain hospital-records read-side — the same data the clinician sees, served straight from the hospital service.
+
+(The richer mock EHR we opened from the SYNC drawer in Beat 2 is the clinician-facing version of this.)
+
+---
+
+### Beat 6 · When it matters (back to tab 1 — phone app, or switch patients)
 
 If time permits, run the heart-risk scenario to show alerts:
 
@@ -127,7 +151,7 @@ Switch to admin dashboard → Transactions → scroll to `Patient/pt-002`.
 | Journey drawer gets stuck on step 2 yellow | Say: *"The AI translator path isn't wired right now — we have the Claude Opus 4.7 integration ready but running on the deterministic fallback for this demo. The yellow is the fallback light."* |
 | Admin dashboard shows no data | On the admin terminal: `npm run dev` restart. Takes ~2 s. Fire a `curl -s -X POST http://localhost:4000/sync/pt-001` to re-seed. |
 | Hospital EHR shows empty flowsheet | The demo polls admin every 5 s — just wait. If still empty, reload the tab. |
-| Browser doesn't open any tab | All three URLs: `http://localhost:4002/`, `http://localhost:4000/`, `http://localhost:4000/demo/hospital-integration.html` |
+| Browser doesn't open any tab | All four URLs: `http://localhost:4002/whoop.html`, `http://localhost:4000/`, `http://localhost:4002/operator.html`, `http://localhost:4000/#hospital` (clinician EHR opens on-demand from the SYNC drawer) |
 
 ---
 
