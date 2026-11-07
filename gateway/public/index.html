@@ -156,6 +156,67 @@ button{font:inherit;cursor:pointer;color:inherit;background:none;border:0}
 .tab svg{width:22px;height:22px}
 .tab.on::after{content:"";position:absolute;bottom:0;width:4px;height:4px;border-radius:50%;background:var(--accent);margin-top:0}
 .tab-dot{position:absolute}
+
+/* journey drawer */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:opacity .25s;z-index:5}
+.scrim.show{opacity:1;pointer-events:auto}
+.drawer{
+  position:fixed;left:50%;bottom:0;transform:translate(-50%, 100%);
+  width:100%;max-width:430px;
+  background:var(--phone-bg);border-radius:24px 24px 0 0;
+  padding:20px 22px 28px;z-index:6;
+  transition:transform .3s cubic-bezier(.32,.72,.2,1);
+  box-shadow:0 -20px 60px rgba(0,0,0,.6);
+}
+.drawer.show{transform:translate(-50%, 0)}
+.drawer .handle{width:40px;height:4px;background:var(--line);border-radius:2px;margin:0 auto 18px}
+.drawer h3{margin:0 0 4px;font-size:18px;font-weight:600;letter-spacing:-0.01em}
+.drawer .j-sub{font-size:13px;color:var(--ink2);margin-bottom:18px}
+
+.journey{display:flex;flex-direction:column;gap:0;margin-bottom:16px}
+.j-step{
+  display:grid;grid-template-columns:36px 1fr auto;gap:12px;align-items:flex-start;
+  padding:12px 0;position:relative;
+}
+.j-step + .j-step::before{
+  content:"";position:absolute;left:17px;top:-16px;width:2px;height:28px;
+  background:var(--line);
+}
+.j-step.ok + .j-step::before{background:var(--green)}
+.j-step.err + .j-step::before{background:var(--red)}
+
+.j-icon{
+  width:36px;height:36px;border-radius:50%;background:var(--card);
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:700;color:var(--ink3);
+  border:2px solid var(--line);transition:all .25s;
+}
+.j-step.active .j-icon{
+  color:var(--accent);border-color:var(--accent);
+  background:rgba(90,169,230,.1);
+  animation:pulse 1.2s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(90,169,230,.4)}50%{box-shadow:0 0 0 8px rgba(90,169,230,0)}}
+.j-step.ok .j-icon{color:var(--green);border-color:var(--green);background:rgba(52,199,89,.12)}
+.j-step.err .j-icon{color:var(--red);border-color:var(--red);background:rgba(255,95,87,.12)}
+.j-step.warn .j-icon{color:var(--orange);border-color:var(--orange);background:rgba(255,159,10,.12)}
+
+.j-text .j-title{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:2px}
+.j-text .j-desc{font-size:12.5px;color:var(--ink3);line-height:1.4}
+.j-step.ok .j-text .j-desc{color:var(--ink2)}
+
+.j-aside{font-size:11px;color:var(--ink3);text-align:right;padding-top:2px;font-variant-numeric:tabular-nums}
+.j-step.ok .j-aside{color:var(--green)}
+.j-step.err .j-aside{color:var(--red)}
+
+.j-footer{display:flex;gap:10px;margin-top:10px}
+.j-footer .fbtn{
+  flex:1;padding:12px;border-radius:12px;font-size:13px;font-weight:600;text-align:center;
+  background:var(--card-2);color:var(--ink);text-decoration:none;
+}
+.j-footer .fbtn:hover{background:#333a46}
+.j-footer .fbtn.primary{background:var(--accent);color:#fff}
+.j-footer .fbtn.primary:hover{background:#4a98d6}
 </style>
 </head>
 <body>
@@ -239,6 +300,45 @@ button{font:inherit;cursor:pointer;color:inherit;background:none;border:0}
         Hospital Share
       </button>
     </div>
+  </div>
+</div>
+
+<!-- Journey drawer: shows the data's path after SYNC -->
+<div class="scrim" id="scrim"></div>
+<div class="drawer" id="drawer" role="dialog" aria-label="Data journey">
+  <div class="handle"></div>
+  <h3>Data journey</h3>
+  <div class="j-sub" id="jSub">Your biometric data is on its way to Cork University Hospital.</div>
+  <div class="journey" id="journey">
+    <div class="j-step" data-step="app">
+      <div class="j-icon">1</div>
+      <div class="j-text">
+        <div class="j-title">WatchLink app</div>
+        <div class="j-desc" data-desc="app">Preparing consented metrics…</div>
+      </div>
+      <div class="j-aside" data-aside="app"></div>
+    </div>
+    <div class="j-step" data-step="gateway">
+      <div class="j-icon">2</div>
+      <div class="j-text">
+        <div class="j-title">Corkathon gateway</div>
+        <div class="j-desc" data-desc="gateway">Translate to FHIR + apply consent</div>
+      </div>
+      <div class="j-aside" data-aside="gateway"></div>
+    </div>
+    <div class="j-step" data-step="hospital">
+      <div class="j-icon">3</div>
+      <div class="j-text">
+        <div class="j-title">Cork University Hospital</div>
+        <div class="j-desc" data-desc="hospital">Validate + store + flag clinical alerts</div>
+      </div>
+      <div class="j-aside" data-aside="hospital"></div>
+    </div>
+  </div>
+  <div class="j-footer">
+    <a class="fbtn" href="http://localhost:4000/" target="_blank" rel="noopener">Dashboard</a>
+    <a class="fbtn" href="http://localhost:4000/demo/hospital-integration.html" target="_blank" rel="noopener">Clinician view</a>
+    <button class="fbtn primary" id="jClose">Done</button>
   </div>
 </div>
 
@@ -327,42 +427,101 @@ $('#btnPrivate').onclick = () => {
   updateCounts();
 };
 
+// ─── Journey drawer helpers ───
+function setStep(name, cls, desc, aside){
+  const el = document.querySelector(`.j-step[data-step="${name}"]`);
+  if(!el) return;
+  el.classList.remove('active','ok','err','warn');
+  if(cls) el.classList.add(cls);
+  if(desc != null) el.querySelector(`[data-desc="${name}"]`).textContent = desc;
+  if(aside != null) el.querySelector(`[data-aside="${name}"]`).textContent = aside;
+}
+function resetJourney(){
+  for(const name of ['app','gateway','hospital']){
+    setStep(name, '', null, '');
+  }
+}
+function openDrawer(){
+  resetJourney();
+  $('#scrim').classList.add('show');
+  $('#drawer').classList.add('show');
+}
+function closeDrawer(){
+  $('#scrim').classList.remove('show');
+  $('#drawer').classList.remove('show');
+}
+$('#jClose').onclick = closeDrawer;
+$('#scrim').onclick = closeDrawer;
+
 $('#syncBtn').onclick = async () => {
   if(state.shareMode !== 'share' || state.enabled.size === 0) return;
   const btn = $('#syncBtn');
   const stat = $('#syncStatus');
   btn.disabled = true;
-  stat.textContent = 'Syncing with Cork University Hospital…';
-  stat.className = 'sync-status';
-  try{
-    const r = await fetch(`/sync/${encodeURIComponent(PATIENT_ID)}`, {
+  stat.textContent = ''; stat.className = 'sync-status';
+
+  openDrawer();
+  const enabledList = [...state.enabled];
+  const t0 = performance.now();
+
+  // Step 1 — App preparing payload.
+  setStep('app', 'active', `Sending ${enabledList.length} consented metric${enabledList.length === 1 ? '' : 's'}`, '…');
+  await new Promise(r => setTimeout(r, 350));
+  setStep('app', 'ok', `Sent ${enabledList.length} consented metric${enabledList.length === 1 ? '' : 's'}`, `${Math.round(performance.now() - t0)}ms`);
+
+  // Step 2 — Gateway handoff.
+  setStep('gateway', 'active', 'Translating Whoop snapshot → FHIR Bundle', '…');
+  const tGw = performance.now();
+  let r, data;
+  try {
+    r = await fetch(`/sync/${encodeURIComponent(PATIENT_ID)}`, {
       method:'POST',
       headers:{ 'content-type':'application/json' },
-      body: JSON.stringify({ consent: { allow: [...state.enabled] } }),
+      body: JSON.stringify({ consent: { allow: enabledList } }),
     });
-    const d = await r.json();
-    if(r.ok){
-      const h = d.hospital || {};
-      const n = h.accepted ?? 0;
-      const alerts = h.alerts?.length ?? 0;
-      if(alerts > 0){
-        stat.textContent = `✓ Synced ${n} metric${n === 1 ? '' : 's'} · ${alerts} clinical alert${alerts === 1 ? '' : 's'} flagged for review`;
-        stat.className = 'sync-status alert';
-      }else{
-        stat.textContent = `✓ Synced ${n} metric${n === 1 ? '' : 's'} to CUH`;
-        stat.className = 'sync-status ok';
-      }
-    }else{
-      stat.textContent = `Could not sync (${d.stage ?? 'error'})`;
-      stat.className = 'sync-status err';
-    }
-  }catch(err){
-    stat.textContent = `Could not reach hospital: ${err.message}`;
-    stat.className = 'sync-status err';
-  }finally{
-    btn.disabled = false;
-    updateCounts();
+    data = await r.json();
+  } catch(err) {
+    setStep('gateway', 'err', `Could not reach gateway: ${err.message}`, '');
+    stat.textContent = 'Could not reach hospital'; stat.className = 'sync-status err';
+    btn.disabled = false; updateCounts();
+    return;
   }
+
+  if(!data?.bundle){
+    setStep('gateway', 'err', `Translator failed at ${data?.stage ?? 'unknown'}`, '');
+    stat.textContent = `Could not sync (${data?.stage ?? 'error'})`; stat.className = 'sync-status err';
+    btn.disabled = false; updateCounts();
+    return;
+  }
+  const nObs = data.bundle.entry.length;
+  const engine = data.translator === 'ai' ? 'Claude 4.7' : 'rule-based';
+  setStep(
+    'gateway',
+    data.aiError ? 'warn' : 'ok',
+    `${nObs} FHIR Observation${nObs === 1 ? '' : 's'} built via ${engine}`,
+    `${Math.round(performance.now() - tGw)}ms`
+  );
+
+  // Step 3 — Hospital receipt.
+  setStep('hospital', 'active', 'Posting Bundle to hospital…', '…');
+  await new Promise(r => setTimeout(r, 250));
+  const h = data.hospital || {};
+  const alerts = h.alerts?.length ?? 0;
+  if(r.ok){
+    if(alerts > 0){
+      setStep('hospital', 'warn', `Stored as ${h.id} · ${alerts} clinical alert${alerts === 1 ? '' : 's'} flagged`, `${Math.round(performance.now() - t0)}ms total`);
+      stat.textContent = `✓ Synced · ${alerts} alert${alerts === 1 ? '' : 's'}`; stat.className = 'sync-status alert';
+    } else {
+      setStep('hospital', 'ok', `Stored as ${h.id} · no clinical flags`, `${Math.round(performance.now() - t0)}ms total`);
+      stat.textContent = `✓ Synced ${h.accepted ?? nObs} metrics to CUH`; stat.className = 'sync-status ok';
+    }
+  }else{
+    setStep('hospital', 'err', `Hospital rejected bundle`, '');
+    stat.textContent = `Rejected at hospital`; stat.className = 'sync-status err';
+  }
+
+  btn.disabled = false;
+  updateCounts();
 };
 
 boot();
