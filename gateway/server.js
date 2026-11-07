@@ -3,7 +3,7 @@ import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
 import { EventEmitter } from "events";
-import { consentFor } from "./consent.js";
+import { consentFor, setConsentFor } from "./consent.js";
 import { translateRuleBased, LOINC_MAPPING, UNMAPPED_WHOOP_FIELDS } from "./translate.js";
 import { translateWithClaude } from "./translate-ai.js";
 
@@ -28,8 +28,14 @@ if (fs.existsSync(envPath)) {
 
 const app = express();
 app.use(express.json({ limit: "1mb" }));
-// Gateway operator dashboard — served from gateway/public so the folder
-// is self-contained in the repo.
+// Gateway operator dashboard / patient app — served from gateway/public
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  if (req.method === "OPTIONS") return res.sendStatus(204);
+  next();
+});
 app.use(express.static(path.join(__dirname, "public")));
 
 const port = process.env.PORT || 4002;
@@ -85,6 +91,26 @@ app.get("/patients", async (_req, res) => {
   }
 });
 
+app.get("/patients/:id/snapshot", async (req, res) => {
+  try {
+    const r = await fetch(`${WHOOP_URL}/patients/${req.params.id}/snapshot`);
+    if (!r.ok) return res.status(r.status).send(await r.text());
+    res.json(await r.json());
+  } catch (err) {
+    res.status(502).json({ error: String(err) });
+  }
+});
+
+app.get("/patients/:id/history", async (req, res) => {
+  try {
+    const r = await fetch(`${WHOOP_URL}/patients/${req.params.id}/history`);
+    if (!r.ok) return res.status(r.status).send(await r.text());
+    res.json(await r.json());
+  } catch (err) {
+    res.status(502).json({ error: String(err) });
+  }
+});
+
 app.get("/consent/:patientId", (req, res) => {
   res.json(consentFor(req.params.patientId));
 });
@@ -110,6 +136,11 @@ app.get("/whoop/history/:patientId", async (req, res) => {
   } catch (err) {
     res.status(502).json({ error: String(err) });
   }
+});
+
+app.put("/consent/:patientId", (req, res) => {
+  const updated = setConsentFor(req.params.patientId, req.body?.allow ?? []);
+  res.json(updated);
 });
 
 app.get("/hospital/records", async (_req, res) => {
@@ -241,6 +272,9 @@ app.get("/events/stream", (req, res) => {
 //   dashboard can animate the pipeline live.
 app.post("/sync/:patientId", async (req, res) => {
   const { patientId } = req.params;
+  if (req.body?.consent?.allow && Array.isArray(req.body.consent.allow)) {
+    setConsentFor(patientId, req.body.consent.allow);
+  }
   const consent = req.body?.consent || consentFor(patientId);
   const runId = `run-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 

@@ -1,773 +1,2871 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>WatchLink — Cork University Hospital</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
-:root{
-  --bg:#0b0d10;
-  --phone-bg:#15181d;
-  --card:#1c2029;
-  --card-2:#262b35;
-  --ink:#e8ebef;
-  --ink2:#a4acb8;
-  --ink3:#6b7482;
-  --line:#2a2f39;
-  --accent:#5aa9e6;
-  --red:#ff5f57;
-  --green:#34c759;
-  --orange:#ff9f0a;
-  --amber:#ffd60a;
-  --violet:#bf5af2;
-  --teal:#64d2ff;
-  --pill-bg:#2a2f39;
-}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{margin:0;min-height:100vh;background:#000;color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,system-ui,sans-serif;font-size:14px;display:flex;flex-direction:column;align-items:center;padding:24px 16px;gap:16px}
-button{font:inherit;cursor:pointer;color:inherit;background:none;border:0}
-
-/* page chrome */
-.page-note{font-size:12px;color:var(--ink3);max-width:390px;text-align:center}
-.page-note a{color:var(--accent);text-decoration:none}
-
-/* phone shell */
-.phone{
-  width:100%;max-width:390px;
-  background:var(--phone-bg);
-  border-radius:40px;
-  padding:14px 10px 18px;
-  box-shadow:0 20px 60px rgba(0,0,0,0.6), inset 0 0 0 1px #000;
-  position:relative;
-  min-height:800px;
-}
-.phone::before{
-  content:"";position:absolute;top:18px;left:50%;transform:translateX(-50%);
-  width:120px;height:26px;background:#000;border-radius:20px;z-index:3;
-}
-.statusbar{
-  position:relative;z-index:1;display:flex;justify-content:space-between;align-items:center;
-  padding:8px 22px 14px;font-size:13px;color:var(--ink);font-weight:600;letter-spacing:.01em;
-}
-.statusbar .left{display:flex;align-items:center;gap:6px}
-.statusbar .right{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink2)}
-.chev-up{display:inline-block;width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-bottom:5px solid var(--ink);margin-right:3px}
-
-.screen{padding:0 18px 0}
-
-/* header row: profile + date + bpm */
-.hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-top:4px}
-.prof{
-  width:36px;height:36px;border-radius:50%;background:var(--card-2);
-  display:flex;align-items:center;justify-content:center;position:relative;
-}
-.prof::after{content:"";position:absolute;bottom:-1px;right:-1px;width:10px;height:10px;border-radius:50%;background:var(--green);border:2px solid var(--phone-bg)}
-.prof svg{width:18px;height:18px;color:var(--ink2)}
-.date-nav{display:flex;align-items:center;gap:6px;background:var(--card);padding:6px 10px;border-radius:22px}
-.date-nav button{color:var(--ink2);padding:0 4px;font-size:16px;line-height:1}
-.date-nav span{font-size:13px;font-weight:600;letter-spacing:.02em}
-.caret{display:inline-block;width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid var(--ink2);margin-left:4px;vertical-align:middle}
-.bpm-pill{display:inline-flex;align-items:center;gap:6px;background:var(--card);padding:6px 11px;border-radius:22px;font-size:13px;font-weight:600}
-.bpm-pill::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--red);box-shadow:0 0 6px rgba(255,95,87,0.5)}
-
-/* hospital card */
-.hosp{
-  background:linear-gradient(135deg, #1a1e27 0%, #141821 100%);
-  border-radius:16px;padding:16px 18px;margin-bottom:16px;
-  display:flex;justify-content:space-between;align-items:center;
-}
-.hosp h2{margin:0 0 4px;font-size:16px;font-weight:700;letter-spacing:-0.01em}
-.hosp .meta{font-size:11.5px;color:var(--ink3);line-height:1.5}
-.hosp .meta b{color:var(--ink2);font-weight:500}
-.hosp .profile-btn{
-  background:var(--card-2);color:var(--ink);padding:6px 10px;border-radius:8px;
-  font-size:11.5px;font-weight:600;display:flex;align-items:center;gap:3px;
-}
-.hosp .profile-btn::after{content:"›";font-size:14px;color:var(--ink2);margin-left:1px}
-
-/* share prompt */
-.share{
-  background:var(--card);border-radius:16px;padding:18px 18px 16px;margin-bottom:18px;
-}
-.share h3{margin:0 0 6px;font-size:16px;font-weight:600;letter-spacing:-0.01em;line-height:1.3}
-.share p{margin:0 0 14px;font-size:13px;color:var(--ink2);line-height:1.5}
-.share .btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.share .btn{
-  padding:11px 14px;border-radius:12px;font-size:14px;font-weight:600;
-  display:flex;align-items:center;justify-content:center;gap:6px;
-  background:var(--card-2);color:var(--ink);transition:all .15s;
-}
-.share .btn.active{background:#fff;color:#000}
-.share .btn:not(.active):hover{background:#2f3540}
-.share .btn .ic{font-size:14px}
-
-/* biometric section */
-.sec-hdr{
-  display:flex;justify-content:space-between;align-items:center;padding:0 2px 10px;
-  font-size:11px;letter-spacing:.14em;color:var(--ink3);font-weight:600;text-transform:uppercase;
-}
-.sec-hdr .count{color:var(--ink2);font-weight:500;letter-spacing:.04em;text-transform:none;font-size:11.5px}
-
-.metrics{display:flex;flex-direction:column;gap:10px;margin-bottom:18px}
-.metric{
-  background:var(--card);border-radius:14px;padding:14px 16px;
-  display:flex;align-items:center;gap:12px;
-}
-.metric .info{flex:1;min-width:0}
-.metric .name{font-size:14.5px;font-weight:600;letter-spacing:-0.01em;margin-bottom:2px}
-.metric .sub{font-size:12px;color:var(--ink3);line-height:1.4}
-.metric .sub .val{color:var(--ink2);font-weight:500}
-
-/* iOS-style toggle */
-.toggle{position:relative;width:44px;height:26px;background:var(--card-2);border-radius:13px;transition:background .2s;flex:none;cursor:pointer}
-.toggle::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,0.3)}
-.toggle.on{background:var(--accent)}
-.toggle.on::after{transform:translateX(18px)}
-
-/* sync button */
-.sync-wrap{padding:0 0 14px}
-.sync-btn{
-  width:100%;padding:16px;border-radius:30px;
-  background:var(--card-2);color:var(--ink);font-size:14px;font-weight:600;letter-spacing:.06em;
-  transition:all .15s;text-transform:uppercase;
-}
-.sync-btn:hover{background:#333a46}
-.sync-btn:disabled{color:var(--ink3);cursor:not-allowed}
-.sync-btn.active{background:var(--accent);color:#fff}
-.sync-btn.active:hover{background:#4a98d6}
-
-.sync-status{
-  text-align:center;font-size:12px;color:var(--ink2);min-height:16px;margin-top:8px;
-  transition:color .2s;
-}
-.sync-status.ok{color:var(--green)}
-.sync-status.err{color:var(--red)}
-.sync-status.alert{color:var(--orange)}
-
-/* bottom tab bar */
-.tabs{
-  display:grid;grid-template-columns:repeat(3,1fr);
-  border-top:1px solid var(--line);padding:12px 0 4px;margin-top:8px;
-}
-.tab{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10.5px;color:var(--ink3);font-weight:500}
-.tab.on{color:var(--ink)}
-.tab svg{width:22px;height:22px}
-.tab.on::after{content:"";position:absolute;bottom:0;width:4px;height:4px;border-radius:50%;background:var(--accent);margin-top:0}
-.tab-dot{position:absolute}
-
-/* ── Views (tab switching) ── */
-.view{display:none}
-body[data-view="overview"] .view[data-v="overview"],
-body[data-view="cardio"] .view[data-v="cardio"],
-body[data-view="share"] .view[data-v="share"]{display:block}
-
-/* Overview tab */
-.ov-hero{background:linear-gradient(135deg,#1e2430 0%,#141821 100%);border-radius:20px;padding:22px;margin-bottom:14px;position:relative;overflow:hidden}
-.ov-hero::before{content:"";position:absolute;top:-30px;right:-30px;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,rgba(90,169,230,.2) 0%,transparent 70%)}
-.ov-greet{font-size:13px;color:var(--ink2);margin-bottom:4px;position:relative}
-.ov-name{font-size:24px;font-weight:700;letter-spacing:-0.02em;margin-bottom:14px;position:relative}
-.ov-score{display:flex;align-items:baseline;gap:8px;position:relative}
-.ov-score-val{font-size:48px;font-weight:700;letter-spacing:-0.03em;line-height:1}
-.ov-score-lbl{font-size:13px;color:var(--ink2)}
-.ov-score-sub{font-size:12.5px;color:var(--ink3);margin-top:6px;position:relative}
-
-.ov-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
-.ov-stat{background:var(--card);border-radius:14px;padding:14px 16px}
-.ov-stat .l{font-size:11.5px;color:var(--ink3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em;font-weight:600}
-.ov-stat .v{font-size:22px;font-weight:700;letter-spacing:-0.01em;margin-bottom:2px}
-.ov-stat .u{font-size:12px;color:var(--ink3)}
-
-.ov-list{background:var(--card);border-radius:14px;padding:4px 0;margin-bottom:14px}
-.ov-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line)}
-.ov-row:last-child{border-bottom:none}
-.ov-row .ic{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;flex:none;font-size:14px}
-.ov-row .ic.pink{background:linear-gradient(135deg,#ff5f57 0%,#d63341 100%)}
-.ov-row .ic.blue{background:linear-gradient(135deg,#5aa9e6 0%,#3a7cb0 100%)}
-.ov-row .ic.purple{background:linear-gradient(135deg,#bf5af2 0%,#9540c7 100%)}
-.ov-row .ic.teal{background:linear-gradient(135deg,#64d2ff 0%,#2a9fb5 100%)}
-.ov-row .info{flex:1}
-.ov-row .n{font-size:14.5px;font-weight:600;margin-bottom:1px}
-.ov-row .s{font-size:12px;color:var(--ink3)}
-.ov-row .v{font-size:15px;font-weight:600;color:var(--ink)}
-
-/* Cardio tab */
-.cv-head{text-align:center;margin-bottom:18px}
-.cv-head .lbl{font-size:12px;color:var(--ink3);text-transform:uppercase;letter-spacing:.1em;font-weight:600;margin-bottom:4px}
-.cv-head .big{font-size:56px;font-weight:700;letter-spacing:-0.03em;line-height:1;color:var(--red);text-shadow:0 0 30px rgba(255,95,87,.3)}
-.cv-head .unit{font-size:16px;color:var(--ink2);margin-left:4px;font-weight:500}
-.cv-head .sub{font-size:12.5px;color:var(--ink3);margin-top:4px}
-
-.cv-card{background:var(--card);border-radius:14px;padding:16px;margin-bottom:12px}
-.cv-card-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
-.cv-card-t{font-size:14.5px;font-weight:600}
-.cv-card-v{font-size:16px;font-weight:600;font-variant-numeric:tabular-nums}
-.cv-card-v .u{font-size:11px;color:var(--ink3);margin-left:2px}
-.cv-sub{font-size:12px;color:var(--ink3);margin-bottom:10px}
-
-.spark{width:100%;height:60px;display:block}
-.spark .line{fill:none;stroke-width:2}
-.spark .area{fill-opacity:.15}
-.spark circle{stroke:var(--phone-bg);stroke-width:2}
-
-.cv-range{display:flex;justify-content:space-between;font-size:11px;color:var(--ink3);margin-top:6px;font-variant-numeric:tabular-nums}
-
-/* Ensure tabs are actually clickable */
-.tab{background:none;border:0;padding:4px 0;cursor:pointer;position:relative}
-
-/* journey drawer */
-.scrim{position:fixed;inset:0;background:rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:opacity .25s;z-index:5}
-.scrim.show{opacity:1;pointer-events:auto}
-.drawer{
-  position:fixed;left:50%;bottom:0;transform:translate(-50%, 100%);
-  width:100%;max-width:430px;
-  background:var(--phone-bg);border-radius:24px 24px 0 0;
-  padding:20px 22px 28px;z-index:6;
-  transition:transform .3s cubic-bezier(.32,.72,.2,1);
-  box-shadow:0 -20px 60px rgba(0,0,0,.6);
-}
-.drawer.show{transform:translate(-50%, 0)}
-.drawer .handle{width:40px;height:4px;background:var(--line);border-radius:2px;margin:0 auto 18px}
-.drawer h3{margin:0 0 4px;font-size:18px;font-weight:600;letter-spacing:-0.01em}
-.drawer .j-sub{font-size:13px;color:var(--ink2);margin-bottom:18px}
-
-.journey{display:flex;flex-direction:column;gap:0;margin-bottom:16px}
-.j-step{
-  display:grid;grid-template-columns:36px 1fr auto;gap:12px;align-items:flex-start;
-  padding:12px 0;position:relative;
-}
-.j-step + .j-step::before{
-  content:"";position:absolute;left:17px;top:-16px;width:2px;height:28px;
-  background:var(--line);
-}
-.j-step.ok + .j-step::before{background:var(--green)}
-.j-step.err + .j-step::before{background:var(--red)}
-
-.j-icon{
-  width:36px;height:36px;border-radius:50%;background:var(--card);
-  display:flex;align-items:center;justify-content:center;
-  font-size:14px;font-weight:700;color:var(--ink3);
-  border:2px solid var(--line);transition:all .25s;
-}
-.j-step.active .j-icon{
-  color:var(--accent);border-color:var(--accent);
-  background:rgba(90,169,230,.1);
-  animation:pulse 1.2s ease-in-out infinite;
-}
-@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(90,169,230,.4)}50%{box-shadow:0 0 0 8px rgba(90,169,230,0)}}
-.j-step.ok .j-icon{color:var(--green);border-color:var(--green);background:rgba(52,199,89,.12)}
-.j-step.err .j-icon{color:var(--red);border-color:var(--red);background:rgba(255,95,87,.12)}
-.j-step.warn .j-icon{color:var(--orange);border-color:var(--orange);background:rgba(255,159,10,.12)}
-
-.j-text .j-title{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:2px}
-.j-text .j-desc{font-size:12.5px;color:var(--ink3);line-height:1.4}
-.j-step.ok .j-text .j-desc{color:var(--ink2)}
-
-.j-aside{font-size:11px;color:var(--ink3);text-align:right;padding-top:2px;font-variant-numeric:tabular-nums}
-.j-step.ok .j-aside{color:var(--green)}
-.j-step.err .j-aside{color:var(--red)}
-
-.j-footer{display:flex;gap:10px;margin-top:10px}
-.j-footer .fbtn{
-  flex:1;padding:12px;border-radius:12px;font-size:13px;font-weight:600;text-align:center;
-  background:var(--card-2);color:var(--ink);text-decoration:none;
-}
-.j-footer .fbtn:hover{background:#333a46}
-.j-footer .fbtn.primary{background:var(--accent);color:#fff}
-.j-footer .fbtn.primary:hover{background:#4a98d6}
-</style>
-</head>
-<body data-view="share">
-
-<div class="page-note">
-  WatchLink · Cork University Hospital · patient consent app<br>
-  <a href="/operator.html">Open operator dashboard →</a>
-</div>
-
-<div class="phone">
-  <div class="statusbar">
-    <div class="left"><span>11:25</span> <span style="color:var(--red)">▲</span></div>
-    <div class="right">
-      <span class="chev-up"></span>
-      <span>LTE</span>
-      <span style="display:inline-block;width:22px;height:11px;border:1px solid var(--ink2);border-radius:2px;position:relative;margin-left:4px"><span style="position:absolute;inset:1px;background:var(--ink2);border-radius:1px;width:70%"></span></span>
-    </div>
-  </div>
-
-  <div class="screen">
-    <div class="hdr">
-      <div class="prof" title="Signed in">
-        <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>
-      </div>
-      <div class="date-nav">
-        <button aria-label="Previous day">‹</button>
-        <span>TODAY<span class="caret"></span></span>
-        <button aria-label="Next day">›</button>
-      </div>
-      <div class="bpm-pill"><span id="bpmVal">—</span> BPM</div>
-    </div>
-
-    <div class="hosp">
-      <div>
-        <h2>Cork University Hospital <span style="color:var(--ink2);font-weight:500">(CUH)</span></h2>
-        <div class="meta">
-          <b>PPSN:</b> 8492014A · <b>IHI:</b> …2938 · <span style="color:var(--green)">● Signed In</span>
-        </div>
-      </div>
-      <button class="profile-btn">PROFILE</button>
-    </div>
-
-    <!-- ── Overview tab ── -->
-    <div class="view" data-v="overview">
-      <div class="ov-hero">
-        <div class="ov-greet">Good morning, Jane.</div>
-        <div class="ov-name">You're recovered.</div>
-        <div class="ov-score">
-          <span class="ov-score-val" id="ovScore">—</span>
-          <span class="ov-score-lbl">/100 recovery</span>
-        </div>
-        <div class="ov-score-sub" id="ovSub">Updated moments ago</div>
-      </div>
-
-      <div class="ov-stats">
-        <div class="ov-stat">
-          <div class="l">Strain</div>
-          <div class="v" id="ovStrain">—</div>
-          <div class="u">today · 0–21 scale</div>
-        </div>
-        <div class="ov-stat">
-          <div class="l">Sleep</div>
-          <div class="v" id="ovSleep">—</div>
-          <div class="u">last night</div>
-        </div>
-      </div>
-
-      <div class="ov-list">
-        <div class="ov-row">
-          <div class="ic pink">♥</div>
-          <div class="info"><div class="n">Resting heart rate</div><div class="s">Baseline cardiac rhythm</div></div>
-          <div class="v"><span id="ovRhr">—</span> bpm</div>
-        </div>
-        <div class="ov-row">
-          <div class="ic blue">⌇</div>
-          <div class="info"><div class="n">Heart rate variability</div><div class="s">Nervous system balance</div></div>
-          <div class="v"><span id="ovHrv">—</span> ms</div>
-        </div>
-        <div class="ov-row">
-          <div class="ic teal">O₂</div>
-          <div class="info"><div class="n">Blood oxygen</div><div class="s">Overnight average</div></div>
-          <div class="v"><span id="ovSpo2">—</span> %</div>
-        </div>
-        <div class="ov-row">
-          <div class="ic purple">☾</div>
-          <div class="info"><div class="n">Sleep efficiency</div><div class="s">Time asleep vs. time in bed</div></div>
-          <div class="v"><span id="ovSleepEff">—</span> %</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ── Cardio & Vitals tab ── -->
-    <div class="view" data-v="cardio">
-      <div class="cv-head">
-        <div class="lbl">Resting heart rate</div>
-        <div class="big"><span id="cvHr">—</span><span class="unit">bpm</span></div>
-        <div class="sub" id="cvHrSub">Last reading · today</div>
-      </div>
-
-      <div class="cv-card">
-        <div class="cv-card-h">
-          <span class="cv-card-t">Resting HR trend</span>
-          <span class="cv-card-v"><span id="cvHrAvg">—</span><span class="u">bpm avg</span></span>
-        </div>
-        <div class="cv-sub">Last 5 days</div>
-        <svg class="spark" viewBox="0 0 300 60" preserveAspectRatio="none" id="sparkHr"></svg>
-        <div class="cv-range" id="rangeHr"></div>
-      </div>
-
-      <div class="cv-card">
-        <div class="cv-card-h">
-          <span class="cv-card-t">HRV (SDNN)</span>
-          <span class="cv-card-v"><span id="cvHrvAvg">—</span><span class="u">ms avg</span></span>
-        </div>
-        <div class="cv-sub">Higher = better nervous-system recovery</div>
-        <svg class="spark" viewBox="0 0 300 60" preserveAspectRatio="none" id="sparkHrv"></svg>
-        <div class="cv-range" id="rangeHrv"></div>
-      </div>
-
-      <div class="cv-card">
-        <div class="cv-card-h">
-          <span class="cv-card-t">Blood oxygen (SpO₂)</span>
-          <span class="cv-card-v"><span id="cvSpo2Avg">—</span><span class="u">% avg</span></span>
-        </div>
-        <div class="cv-sub">Overnight saturation</div>
-        <svg class="spark" viewBox="0 0 300 60" preserveAspectRatio="none" id="sparkSpo2"></svg>
-        <div class="cv-range" id="rangeSpo2"></div>
-      </div>
-    </div>
-
-    <!-- ── Hospital Share tab (original screen) ── -->
-    <div class="view" data-v="share">
-    <div class="share">
-      <h3>Share your cardiology &amp; biometric data with your physician?</h3>
-      <p>Allow your care team to receive your daily resting heart rate, HRV, blood oxygen, and sleep recovery metrics. You can change this anytime.</p>
-      <div class="btns">
-        <button class="btn active" id="btnShare">
-          <span class="ic">✓</span> Yes, Share
-        </button>
-        <button class="btn" id="btnPrivate">
-          <span class="ic">✕</span> No, Private
-        </button>
-      </div>
-    </div>
-
-    <div class="sec-hdr">
-      <span>Biometric Permissions</span>
-      <span class="count" id="permCount">5 of 5 enabled</span>
-    </div>
-
-    <div class="metrics" id="metrics">
-      <!-- rendered by JS -->
-    </div>
-
-    <div class="sync-wrap">
-      <button class="sync-btn active" id="syncBtn">SYNC <span id="syncCount">5</span> METRICS WITH HOSPITAL</button>
-      <div class="sync-status" id="syncStatus"></div>
-    </div>
-    </div><!-- /share view -->
-
-    <div class="tabs">
-      <button class="tab" data-tab="overview">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg>
-        Overview
-      </button>
-      <button class="tab" data-tab="cardio">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12h4l2-6 4 12 2-6h6"/></svg>
-        Cardio &amp; Vitals
-      </button>
-      <button class="tab on" data-tab="share">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l9 4v6c0 5-4 9-9 10-5-1-9-5-9-10V6l9-4z"/></svg>
-        Hospital Share
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- Journey drawer: shows the data's path after SYNC -->
-<div class="scrim" id="scrim"></div>
-<div class="drawer" id="drawer" role="dialog" aria-label="Data journey">
-  <div class="handle"></div>
-  <h3>Data journey</h3>
-  <div class="j-sub" id="jSub">Your biometric data is on its way to Cork University Hospital.</div>
-  <div class="journey" id="journey">
-    <div class="j-step" data-step="app">
-      <div class="j-icon">1</div>
-      <div class="j-text">
-        <div class="j-title">WatchLink app</div>
-        <div class="j-desc" data-desc="app">Preparing consented metrics…</div>
-      </div>
-      <div class="j-aside" data-aside="app"></div>
-    </div>
-    <div class="j-step" data-step="gateway">
-      <div class="j-icon">2</div>
-      <div class="j-text">
-        <div class="j-title">Corkathon gateway</div>
-        <div class="j-desc" data-desc="gateway">Translate to FHIR + apply consent</div>
-      </div>
-      <div class="j-aside" data-aside="gateway"></div>
-    </div>
-    <div class="j-step" data-step="hospital">
-      <div class="j-icon">3</div>
-      <div class="j-text">
-        <div class="j-title">Cork University Hospital</div>
-        <div class="j-desc" data-desc="hospital">Validate + store + flag clinical alerts</div>
-      </div>
-      <div class="j-aside" data-aside="hospital"></div>
-    </div>
-  </div>
-  <div class="j-footer">
-    <a class="fbtn" href="http://localhost:4000/" target="_blank" rel="noopener">Dashboard</a>
-    <a class="fbtn" href="http://localhost:4000/demo/hospital-integration.html" target="_blank" rel="noopener">Clinician view</a>
-    <button class="fbtn primary" id="jClose">Done</button>
-  </div>
-</div>
-
-<script>
-const $ = s => document.querySelector(s);
-const $$ = s => [...document.querySelectorAll(s)];
-
-// Patient is fixed to the first Whoop mock patient; styled with Irish hospital identifiers.
-const PATIENT_ID = 'pt-001';
-
-// Metric definitions — order matches the photo.
-const METRICS = [
-  { key:'restingHeartRate', name:'Resting Heart Rate',       sub:'Baseline cardiac rate at rest',   unit:'bpm',  src:s => s.recovery?.restingHeartRate },
-  { key:'hrvMs',            name:'Heart Rate Variability (HRV)', sub:'Beat-to-beat interval variation', unit:'ms',   src:s => s.recovery?.hrvMs },
-  { key:'spo2',             name:'Blood Oxygen (SpO2)',     sub:'Peripheral oxygen saturation',    unit:'%',    src:s => s.recovery?.spo2 },
-  { key:'sleepDurationMs',  name:'Sleep Duration',          sub:'Overnight restorative duration',  unit:'hrs',  src:s => s.sleep?.durationMs != null ? (s.sleep.durationMs / 3_600_000).toFixed(1) : null },
-  { key:'sleepEfficiency',  name:'Sleep Efficiency',        sub:'Time asleep vs. time in bed',     unit:'%',    src:s => s.sleep?.efficiency != null ? Math.round(s.sleep.efficiency * 100) : null },
-];
-
-const state = {
-  snapshot: null,
-  enabled: new Set(METRICS.map(m => m.key)),
-  shareMode: 'share', // 'share' | 'private'
-};
-
-async function boot(){
-  try{
-    const r = await fetch(`/whoop/snapshot/${encodeURIComponent(PATIENT_ID)}`);
-    state.snapshot = await r.json();
-    $('#bpmVal').textContent = state.snapshot.recovery?.restingHeartRate ?? '—';
-  }catch{
-    $('#bpmVal').textContent = '—';
-  }
-  renderMetrics();
-  updateCounts();
-  renderOverview();
-  loadHistoryAndRenderCardio();
-}
-
-// ── Tab navigation ──
-$$('.tab').forEach(t => {
-  t.onclick = () => {
-    const tab = t.dataset.tab;
-    if (!tab) return;
-    document.body.dataset.view = tab;
-    $$('.tab').forEach(x => x.classList.toggle('on', x === t));
-    // Scroll back to top of screen when switching.
-    document.querySelector('.phone').scrollTop = 0;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-});
-
-// ── Overview tab ──
-function renderOverview(){
-  const s = state.snapshot;
-  if (!s) return;
-  const r = s.recovery || {};
-  const sl = s.sleep || {};
-  const c = s.cycle || {};
-  $('#ovScore').textContent = r.score ?? '—';
-  $('#ovStrain').textContent = c.strain != null ? c.strain.toFixed(1) : '—';
-  $('#ovSleep').textContent = sl.durationMs != null ? (sl.durationMs / 3_600_000).toFixed(1) + ' hrs' : '—';
-  $('#ovRhr').textContent = r.restingHeartRate ?? '—';
-  $('#ovHrv').textContent = r.hrvMs ?? '—';
-  $('#ovSpo2').textContent = r.spo2 ?? '—';
-  $('#ovSleepEff').textContent = sl.efficiency != null ? Math.round(sl.efficiency * 100) : '—';
-  if (s.takenAt){
-    const d = new Date(s.takenAt);
-    $('#ovSub').textContent = `Updated ${d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
-  }
-}
-
-// ── Cardio & Vitals tab ──
-async function loadHistoryAndRenderCardio(){
-  try{
-    const r = await fetch(`/whoop/history/${encodeURIComponent(PATIENT_ID)}`);
-    if (!r.ok) return;
-    state.history = await r.json();
-    renderCardio();
-  }catch{}
-}
-
-function renderCardio(){
-  const s = state.snapshot;
-  const h = state.history || [];
-  if (!s) return;
-  const r = s.recovery || {};
-  $('#cvHr').textContent = r.restingHeartRate ?? '—';
-  if (s.takenAt){
-    const d = new Date(s.takenAt);
-    $('#cvHrSub').textContent = `Last reading · ${d.toLocaleString('en-GB', { dateStyle: 'short', timeStyle: 'short' })}`;
-  }
-
-  const hr   = h.map(x => x.recovery?.restingHeartRate).filter(v => v != null);
-  const hrv  = h.map(x => x.recovery?.hrvMs).filter(v => v != null);
-  const spo2 = h.map(x => x.recovery?.spo2).filter(v => v != null);
-  const dates = h.map(x => new Date(x.takenAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }));
-
-  drawSpark('#sparkHr',   hr,   '#ff5f57');
-  drawSpark('#sparkHrv',  hrv,  '#5aa9e6');
-  drawSpark('#sparkSpo2', spo2, '#64d2ff');
-
-  $('#cvHrAvg').textContent   = hr.length   ? Math.round(avg(hr)) : '—';
-  $('#cvHrvAvg').textContent  = hrv.length  ? Math.round(avg(hrv)) : '—';
-  $('#cvSpo2Avg').textContent = spo2.length ? Math.round(avg(spo2)) : '—';
-
-  $('#rangeHr').innerHTML   = dates.map(d => `<span>${d}</span>`).join('');
-  $('#rangeHrv').innerHTML  = dates.map(d => `<span>${d}</span>`).join('');
-  $('#rangeSpo2').innerHTML = dates.map(d => `<span>${d}</span>`).join('');
-}
-
-function avg(xs){ return xs.reduce((a, b) => a + b, 0) / xs.length; }
-
-function drawSpark(sel, values, color){
-  const svg = document.querySelector(sel);
-  if (!svg || values.length === 0) return;
-  const W = 300, H = 60, pad = 4;
-  const mn = Math.min(...values), mx = Math.max(...values);
-  const range = mx - mn || 1;
-  const step = values.length > 1 ? (W - pad * 2) / (values.length - 1) : 0;
-  const pts = values.map((v, i) => [pad + i * step, H - pad - ((v - mn) / range) * (H - pad * 2)]);
-  const line = pts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
-  const area = line + ` L${pts[pts.length - 1][0].toFixed(1)},${H} L${pts[0][0].toFixed(1)},${H} Z`;
-  svg.innerHTML = `
-    <path class="area" d="${area}" fill="${color}"/>
-    <path class="line" d="${line}" stroke="${color}"/>
-    ${pts.map(p => `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3" fill="${color}"/>`).join('')}
-  `;
-}
-
-function renderMetrics(){
-  const el = $('#metrics');
-  el.innerHTML = '';
-  for(const m of METRICS){
-    const v = state.snapshot ? m.src(state.snapshot) : null;
-    const row = document.createElement('div');
-    row.className = 'metric';
-    row.innerHTML = `
-      <div class="info">
-        <div class="name">${m.name}</div>
-        <div class="sub">${m.sub} · <span class="val">${v != null ? v + ' ' + m.unit : '—'}</span></div>
-      </div>
-      <div class="toggle ${state.enabled.has(m.key) ? 'on' : ''}" data-key="${m.key}" role="switch" aria-checked="${state.enabled.has(m.key)}"></div>
-    `;
-    el.appendChild(row);
-  }
-  $$('.toggle').forEach(t => {
-    t.onclick = () => {
-      const k = t.dataset.key;
-      if(state.enabled.has(k)) state.enabled.delete(k);
-      else state.enabled.add(k);
-      t.classList.toggle('on');
-      t.setAttribute('aria-checked', state.enabled.has(k));
-      updateCounts();
-    };
-  });
-}
-
-function updateCounts(){
-  const n = state.enabled.size;
-  const total = METRICS.length;
-  $('#permCount').textContent = `${n} of ${total} enabled`;
-  $('#syncCount').textContent = n;
-  const btn = $('#syncBtn');
-  btn.classList.toggle('active', n > 0 && state.shareMode === 'share');
-  btn.disabled = n === 0 || state.shareMode === 'private';
-}
-
-$('#btnShare').onclick = () => {
-  state.shareMode = 'share';
-  $('#btnShare').classList.add('active');
-  $('#btnPrivate').classList.remove('active');
-  updateCounts();
-};
-$('#btnPrivate').onclick = () => {
-  state.shareMode = 'private';
-  $('#btnPrivate').classList.add('active');
-  $('#btnShare').classList.remove('active');
-  updateCounts();
-};
-
-// ─── Journey drawer helpers ───
-function setStep(name, cls, desc, aside){
-  const el = document.querySelector(`.j-step[data-step="${name}"]`);
-  if(!el) return;
-  el.classList.remove('active','ok','err','warn');
-  if(cls) el.classList.add(cls);
-  if(desc != null) el.querySelector(`[data-desc="${name}"]`).textContent = desc;
-  if(aside != null) el.querySelector(`[data-aside="${name}"]`).textContent = aside;
-}
-function resetJourney(){
-  for(const name of ['app','gateway','hospital']){
-    setStep(name, '', null, '');
-  }
-}
-function openDrawer(){
-  resetJourney();
-  $('#scrim').classList.add('show');
-  $('#drawer').classList.add('show');
-}
-function closeDrawer(){
-  $('#scrim').classList.remove('show');
-  $('#drawer').classList.remove('show');
-}
-$('#jClose').onclick = closeDrawer;
-$('#scrim').onclick = closeDrawer;
-
-$('#syncBtn').onclick = async () => {
-  if(state.shareMode !== 'share' || state.enabled.size === 0) return;
-  const btn = $('#syncBtn');
-  const stat = $('#syncStatus');
-  btn.disabled = true;
-  stat.textContent = ''; stat.className = 'sync-status';
-
-  openDrawer();
-  const enabledList = [...state.enabled];
-  const t0 = performance.now();
-
-  // Step 1 — App preparing payload.
-  setStep('app', 'active', `Sending ${enabledList.length} consented metric${enabledList.length === 1 ? '' : 's'}`, '…');
-  await new Promise(r => setTimeout(r, 350));
-  setStep('app', 'ok', `Sent ${enabledList.length} consented metric${enabledList.length === 1 ? '' : 's'}`, `${Math.round(performance.now() - t0)}ms`);
-
-  // Step 2 — Gateway handoff.
-  setStep('gateway', 'active', 'Translating Whoop snapshot → FHIR Bundle', '…');
-  const tGw = performance.now();
-  let r, data;
-  try {
-    r = await fetch(`/sync/${encodeURIComponent(PATIENT_ID)}`, {
-      method:'POST',
-      headers:{ 'content-type':'application/json' },
-      body: JSON.stringify({ consent: { allow: enabledList } }),
-    });
-    data = await r.json();
-  } catch(err) {
-    setStep('gateway', 'err', `Could not reach gateway: ${err.message}`, '');
-    stat.textContent = 'Could not reach hospital'; stat.className = 'sync-status err';
-    btn.disabled = false; updateCounts();
-    return;
-  }
-
-  if(!data?.bundle){
-    setStep('gateway', 'err', `Translator failed at ${data?.stage ?? 'unknown'}`, '');
-    stat.textContent = `Could not sync (${data?.stage ?? 'error'})`; stat.className = 'sync-status err';
-    btn.disabled = false; updateCounts();
-    return;
-  }
-  const nObs = data.bundle.entry.length;
-  const engine = data.translator === 'ai' ? 'Claude 4.7' : 'rule-based';
-  setStep(
-    'gateway',
-    data.aiError ? 'warn' : 'ok',
-    `${nObs} FHIR Observation${nObs === 1 ? '' : 's'} built via ${engine}`,
-    `${Math.round(performance.now() - tGw)}ms`
-  );
-
-  // Step 3 — Hospital receipt.
-  setStep('hospital', 'active', 'Posting Bundle to hospital…', '…');
-  await new Promise(r => setTimeout(r, 250));
-  const h = data.hospital || {};
-  const alerts = h.alerts?.length ?? 0;
-  if(r.ok){
-    if(alerts > 0){
-      setStep('hospital', 'warn', `Stored as ${h.id} · ${alerts} clinical alert${alerts === 1 ? '' : 's'} flagged`, `${Math.round(performance.now() - t0)}ms total`);
-      stat.textContent = `✓ Synced · ${alerts} alert${alerts === 1 ? '' : 's'}`; stat.className = 'sync-status alert';
-    } else {
-      setStep('hospital', 'ok', `Stored as ${h.id} · no clinical flags`, `${Math.round(performance.now() - t0)}ms total`);
-      stat.textContent = `✓ Synced ${h.accepted ?? nObs} metrics to CUH`; stat.className = 'sync-status ok';
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WHOOP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-outer: #080a0d;
+      --phone-bg-top: #0f1317;
+      --phone-bg-bottom: #1a2027;
+      --surface-1: #161b21;
+      --surface-2: #222830;
+      --surface-3: #2a313b;
+      --border-hairline: rgba(255, 255, 255, 0.07);
+      --border-subtle: rgba(255, 255, 255, 0.13);
+      --border-active: rgba(255, 255, 255, 0.28);
+
+      --text-white: #ffffff;
+      --text-secondary: #c8d0d9;
+      --text-muted: #8a94a0;
+      --text-dim: #5e6773;
+
+      --strain-blue: #2b88d8;
+      --sleep-slate: #6f859d;
+      --rec-green: #26d07c;
+      --rec-yellow: #f0c419;
+      --rec-red: #e53935;
+
+      --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
     }
-  }else{
-    setStep('hospital', 'err', `Hospital rejected bundle`, '');
-    stat.textContent = `Rejected at hospital`; stat.className = 'sync-status err';
-  }
 
-  btn.disabled = false;
-  updateCounts();
-};
+    * {
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
 
-boot();
-</script>
+    body {
+      margin: 0;
+      background: var(--bg-outer);
+      color: var(--text-white);
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 18px 16px 36px;
+    }
+
+    button, input, select {
+      font-family: inherit;
+      color: inherit;
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      background: none;
+      padding: 0;
+    }
+
+    /* ─── Minimalist Patient Switcher (Above Phone) ─── */
+    .switcher-bar {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: #12161b;
+      border: 1px solid var(--border-hairline);
+      padding: 4px;
+      border-radius: 999px;
+      margin-bottom: 16px;
+    }
+
+    .switcher-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 0 10px 0 12px;
+    }
+
+    .patient-pill {
+      padding: 6px 13px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      transition: all 0.2s var(--ease-out);
+    }
+
+    .patient-pill:hover {
+      color: var(--text-white);
+    }
+
+    .patient-pill.active {
+      background: var(--surface-2);
+      color: var(--text-white);
+      font-weight: 600;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    }
+
+    /* ─── Smartphone Frame ─── */
+    .phone-frame {
+      width: 390px;
+      max-width: 100%;
+      height: 824px;
+      background: linear-gradient(180deg, var(--phone-bg-top) 0%, var(--phone-bg-bottom) 100%);
+      border-radius: 46px;
+      border: 8px solid #1c2127;
+      box-shadow: 0 32px 80px rgba(0, 0, 0, 0.78), 0 0 0 1px rgba(255, 255, 255, 0.07);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* ─── iOS Status Bar ─── */
+    .ios-statusbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 13px 26px 8px;
+      font-size: 13.5px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--text-white);
+      flex-shrink: 0;
+      z-index: 30;
+    }
+
+    .ios-time {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .ios-icons {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* ─── Top App Header ─── */
+    .whoop-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 18px 8px;
+      flex-shrink: 0;
+    }
+
+    .avatar-circle {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: #272e37;
+      border: 1.5px solid rgba(255, 255, 255, 0.14);
+      display: grid;
+      place-items: center;
+      color: #8a94a0;
+      position: relative;
+      transition: transform 0.2s var(--ease-out), border-color 0.2s;
+    }
+
+    .avatar-circle:hover {
+      transform: scale(1.06);
+      border-color: rgba(255, 255, 255, 0.45);
+      color: var(--text-white);
+    }
+
+    .avatar-status-dot {
+      position: absolute;
+      bottom: -1px;
+      right: -1px;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--rec-green);
+      border: 2px solid var(--phone-bg-top);
+    }
+
+    .avatar-status-dot.unlinked {
+      background: var(--rec-yellow);
+    }
+
+    .date-pill {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #252b33;
+      border-radius: 999px;
+      padding: 5px 13px;
+      min-width: 188px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--text-white);
+      transition: background 0.2s;
+    }
+
+    .date-pill:hover {
+      background: #2d343e;
+    }
+
+    .date-pill span {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .live-hr-pill {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border-subtle);
+      background: rgba(255, 255, 255, 0.03);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      transition: all 0.2s var(--ease-out);
+    }
+
+    .live-hr-pill:hover {
+      border-color: var(--border-active);
+      background: rgba(255, 255, 255, 0.07);
+    }
+
+    .pulse-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--rec-red);
+      animation: pulseBeat 1.2s infinite ease-in-out;
+    }
+
+    @keyframes pulseBeat {
+      0%, 100% { transform: scale(1); opacity: 0.95; }
+      50% { transform: scale(1.45); opacity: 0.5; }
+    }
+
+    /* ─── Animated Screen Views ─── */
+    .views-viewport {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      scrollbar-width: none;
+    }
+
+    .views-viewport::-webkit-scrollbar {
+      display: none;
+    }
+
+    .app-view {
+      display: none;
+      flex-direction: column;
+      flex: 1;
+      animation: viewEnter 0.32s var(--ease-out) forwards;
+    }
+
+    .app-view.active {
+      display: flex;
+    }
+
+    @keyframes viewEnter {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ═══════════════════════════════════════════════════ */
+    /* PROFILE POPUP OVERLAY (MATCHES WHOOP PROFILE IMAGE) */
+    /* ═══════════════════════════════════════════════════ */
+    .profile-modal {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, #101317 0%, #161b20 100%);
+      z-index: 25;
+      padding-top: 42px;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(18px) scale(0.985);
+      transition: opacity 0.28s var(--ease-out), transform 0.28s var(--ease-out);
+    }
+
+    .profile-modal.open {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0) scale(1);
+    }
+
+    .profile-topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 20px 0;
+    }
+
+    .profile-menu-btn {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      color: var(--text-white);
+      opacity: 0.9;
+    }
+
+    .profile-edit-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(255, 255, 255, 0.78);
+      display: grid;
+      place-items: center;
+      color: var(--text-white);
+      transition: background 0.18s, transform 0.18s;
+    }
+
+    .profile-edit-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: scale(1.05);
+    }
+
+    /* Profile Avatar & Name Hero */
+    .profile-hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 4px 20px 16px;
+      text-align: center;
+    }
+
+    .profile-avatar-lg {
+      width: 78px;
+      height: 78px;
+      border-radius: 50%;
+      background: #2e3640;
+      display: grid;
+      place-items: center;
+      color: #596573;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+
+    .profile-handle {
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 3px;
+    }
+
+    .profile-fullname {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--text-white);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .profile-age-loc {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    /* Data Streak & Member Since Split Row */
+    .profile-meta-strip {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-top: 1px solid var(--border-hairline);
+      border-bottom: 1px solid var(--border-hairline);
+      padding: 11px 22px;
+    }
+
+    .profile-meta-col:first-child {
+      border-right: 1px solid var(--border-hairline);
+      padding-right: 14px;
+    }
+
+    .profile-meta-col:last-child {
+      padding-left: 18px;
+    }
+
+    .profile-meta-lbl {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      margin-bottom: 3px;
+    }
+
+    .profile-meta-val {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-white);
+    }
+
+    /* WHOOP Outlined Pill Switcher (Like LAST 30 DAYS | ALL TIME in screenshot) */
+    .profile-pill-tabs {
+      margin: 14px 26px 12px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border: 1.5px solid rgba(255, 255, 255, 0.25);
+      border-radius: 999px;
+      height: 34px;
+      position: relative;
+      background: #12161b;
+    }
+
+    .profile-pill-tab {
+      border-radius: 999px;
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      display: grid;
+      place-items: center;
+      margin: -1.5px;
+    }
+
+    .profile-pill-tab.active {
+      border: 1.5px solid var(--text-white);
+      color: var(--text-white);
+      background: #181d24;
+    }
+
+    /* Linked Hospital & Patient Identifiers Section */
+    .profile-clinical-body {
+      padding: 2px 22px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+    }
+
+    .profile-section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.09em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .hospital-auth-card {
+      background: #1a2027;
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 11px 13px;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+
+    .hospital-auth-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .hospital-select {
+      background: transparent;
+      border: none;
+      color: var(--text-white);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 0;
+      cursor: pointer;
+      outline: none;
+      width: 100%;
+    }
+
+    .hospital-select option {
+      background: #181d24;
+      color: var(--text-white);
+    }
+
+    .auth-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      background: rgba(38, 208, 124, 0.14);
+      color: var(--rec-green);
+      flex-shrink: 0;
+    }
+
+    .auth-status-pill.signed-out {
+      background: rgba(240, 196, 25, 0.14);
+      color: var(--rec-yellow);
+    }
+
+    /* Identifier Input Rows (PPSN Mandatory + IHI Optional) */
+    .id-fields-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .id-field-row {
+      background: #1a2027;
+      border: 1px solid var(--border-hairline);
+      border-radius: 9px;
+      padding: 8px 12px;
+      transition: border-color 0.2s;
+    }
+
+    .id-field-row:focus-within {
+      border-color: rgba(255, 255, 255, 0.45);
+    }
+
+    .id-field-row.invalid {
+      border-color: var(--rec-red);
+    }
+
+    .id-field-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .id-field-label {
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .id-req-badge {
+      font-size: 8.5px;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      padding: 1.5px 6px;
+      border-radius: 4px;
+      color: var(--text-white);
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .id-req-badge.optional {
+      color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .id-input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text-white);
+      font-size: 13.5px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      padding: 0;
+    }
+
+    .id-input::placeholder {
+      color: var(--text-dim);
+      font-weight: 400;
+      letter-spacing: 0;
+    }
+
+    /* Outlined WHOOP Pill Action Button (Like ALL ACTIVITIES in screenshot) */
+    .whoop-outline-pill-btn {
+      margin: 4px auto 0;
+      padding: 8px 22px;
+      border-radius: 999px;
+      border: 1.5px solid rgba(255, 255, 255, 0.85);
+      background: #14181e;
+      color: var(--text-white);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.2s var(--ease-out);
+      min-width: 210px;
+    }
+
+    .whoop-outline-pill-btn:hover {
+      background: var(--text-white);
+      color: #0f1317;
+    }
+
+    .profile-save-feedback {
+      font-size: 11px;
+      color: var(--rec-green);
+      text-align: center;
+      min-height: 15px;
+    }
+
+    .profile-save-feedback.err {
+      color: var(--rec-red);
+    }
+
+    /* Profile Bottom Baseline Strip (Matches bottom of screenshot) */
+    .profile-bottom-baselines {
+      margin-top: auto;
+      border-top: 1px solid var(--border-hairline);
+      padding: 12px 22px 10px;
+    }
+
+    .baseline-dual-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+    }
+
+    .baseline-box {
+      padding: 0 8px;
+      text-align: center;
+    }
+
+    .baseline-box:first-child {
+      border-right: 1px solid var(--border-hairline);
+    }
+
+    .baseline-nums {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 4px;
+    }
+
+    .base-bound {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .base-center {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-white);
+    }
+
+    .base-dashed-bar {
+      height: 8px;
+      border-left: 1.5px solid var(--text-dim);
+      border-right: 1.5px solid var(--text-dim);
+      display: flex;
+      align-items: center;
+      position: relative;
+      margin: 0 2px 4px;
+    }
+
+    .base-dashed-line {
+      width: 100%;
+      border-top: 1px dashed var(--text-dim);
+    }
+
+    .base-unit {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .profile-footer-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 22px 6px;
+    }
+
+    .pager-dots {
+      display: flex;
+      gap: 6px;
+      margin: 0 auto;
+      padding-left: 48px;
+    }
+
+    .pager-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .pager-dot.active {
+      background: var(--text-white);
+    }
+
+    .overview-return-btn {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: color 0.15s;
+    }
+
+    .overview-return-btn:hover {
+      color: var(--text-white);
+    }
+
+    /* ═══════════════════════════════════════════════════ */
+    /* VIEW 1: OVERVIEW                                    */
+    /* ═══════════════════════════════════════════════════ */
+    .sub-tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      padding: 2px 14px 0;
+      border-bottom: 1px solid var(--border-hairline);
+      position: relative;
+    }
+
+    .sub-tab {
+      padding: 8px 4px 10px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.09em;
+      color: var(--text-muted);
+      text-align: center;
+      position: relative;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+
+    .sub-tab:hover {
+      color: var(--text-secondary);
+    }
+
+    .sub-tab.active {
+      color: var(--text-white);
+    }
+
+    .sub-tab.active::after {
+      content: "";
+      position: absolute;
+      left: 16px;
+      right: 16px;
+      bottom: 0;
+      height: 2px;
+      background: var(--text-white);
+      border-radius: 2px;
+    }
+
+    .hero-section {
+      padding: 16px 18px 12px;
+      position: relative;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1fr 130px 1fr;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .hero-side-left {
+      text-align: right;
+      padding-right: 4px;
+    }
+
+    .hero-side-right {
+      text-align: left;
+      padding-left: 4px;
+    }
+
+    .hero-big-val {
+      font-size: 22px;
+      font-weight: 400;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      transition: color 0.3s var(--ease-out);
+    }
+
+    .hero-big-label {
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-top: 2px;
+      margin-bottom: 12px;
+      transition: color 0.3s var(--ease-out);
+    }
+
+    .hero-sub-label {
+      font-size: 9.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .hero-sub-val {
+      font-size: 16px;
+      font-weight: 400;
+      color: var(--text-secondary);
+      margin-top: 1px;
+    }
+
+    .ring-container {
+      width: 130px;
+      height: 130px;
+      position: relative;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: transform 0.25s var(--ease-out);
+    }
+
+    .ring-container:hover {
+      transform: scale(1.03);
+    }
+
+    .ring-arc {
+      transition: stroke-dashoffset 0.85s var(--ease-out), stroke 0.4s var(--ease-out);
+    }
+
+    .insight-text {
+      margin: 12px 6px 0;
+      text-align: center;
+      font-size: 12px;
+      line-height: 1.45;
+      color: var(--text-muted);
+      font-weight: 400;
+      min-height: 34px;
+      transition: opacity 0.2s;
+    }
+
+    .insight-text strong {
+      color: var(--text-white);
+      font-weight: 600;
+    }
+
+    .action-divider {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+    }
+
+    .divider-line {
+      flex: 1;
+      height: 1px;
+      background: var(--border-hairline);
+    }
+
+    .round-mini-btn {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #14181d;
+      border: 1px solid var(--border-subtle);
+      display: grid;
+      place-items: center;
+      color: var(--text-secondary);
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .round-mini-btn:hover {
+      border-color: var(--border-active);
+      transform: translateY(-1px);
+    }
+
+    .start-activity-pill {
+      padding: 6px 18px;
+      border-radius: 999px;
+      background: #14181d;
+      border: 1px solid var(--border-subtle);
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--text-white);
+      text-transform: uppercase;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .start-activity-pill:hover {
+      border-color: var(--border-active);
+      background: #1b2128;
+    }
+
+    .activity-list {
+      padding: 4px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .activity-row {
+      background: var(--surface-2);
+      border: 1px solid transparent;
+      border-radius: 6px;
+      padding: 7px 11px 7px 7px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      text-align: left;
+      transition: background 0.18s var(--ease-out), border-color 0.18s var(--ease-out), transform 0.18s var(--ease-out);
+    }
+
+    .activity-row:hover {
+      background: var(--surface-3);
+      border-color: var(--border-subtle);
+      transform: translateY(-1px);
+    }
+
+    .activity-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .activity-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 9px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-white);
+      min-width: 68px;
+    }
+
+    .activity-badge.strain {
+      background: var(--strain-blue);
+    }
+
+    .activity-badge.sleep {
+      background: var(--sleep-slate);
+    }
+
+    .activity-name {
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--text-white);
+      text-transform: uppercase;
+    }
+
+    .activity-sub {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+
+    .activity-times {
+      text-align: right;
+      font-size: 10px;
+      line-height: 1.35;
+      color: var(--text-muted);
+      padding-right: 8px;
+      border-right: 1.5px solid rgba(255, 255, 255, 0.22);
+    }
+
+    .bottom-widgets {
+      margin-top: auto;
+      padding: 10px 16px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .monitor-card {
+      background: var(--surface-2);
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: 11px 13px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      text-align: left;
+      transition: background 0.18s var(--ease-out), border-color 0.18s var(--ease-out);
+    }
+
+    .monitor-card:hover {
+      background: var(--surface-3);
+      border-color: var(--border-subtle);
+    }
+
+    .monitor-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .monitor-title {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      line-height: 1.25;
+      color: var(--text-white);
+      text-transform: uppercase;
+    }
+
+    .monitor-right {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      text-align: right;
+    }
+
+    .monitor-status-top {
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      color: var(--text-white);
+      text-transform: uppercase;
+    }
+
+    .monitor-status-sub {
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      color: var(--rec-green);
+      text-transform: uppercase;
+    }
+
+    .monitor-status-sub.warn {
+      color: var(--rec-red);
+    }
+
+    .check-square {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      background: rgba(38, 208, 124, 0.16);
+      color: var(--rec-green);
+      display: grid;
+      place-items: center;
+    }
+
+    .check-square.warn {
+      background: rgba(229, 57, 53, 0.18);
+      color: var(--rec-red);
+    }
+
+    .device-bar {
+      background: #12161b;
+      border-radius: 8px;
+      padding: 9px 13px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .device-chain {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--text-muted);
+    }
+
+    .chain-line {
+      width: 11px;
+      height: 1.5px;
+      background: var(--rec-green);
+    }
+
+    /* ═══════════════════════════════════════════════════ */
+    /* VIEW 2: CARDIOLOGY & BIOMETRICS                     */
+    /* ═══════════════════════════════════════════════════ */
+    .view-pad {
+      padding: 8px 16px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex: 1;
+    }
+
+    .section-kicker-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .section-kicker {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .section-kicker-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .hr-graph-card {
+      background: #13171c;
+      border: 1px solid var(--border-hairline);
+      border-radius: 10px;
+      padding: 12px 12px 10px;
+    }
+
+    .hr-graph-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+
+    .hr-graph-title {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--text-white);
+      text-transform: uppercase;
+    }
+
+    .hr-graph-time {
+      font-size: 10.5px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .hr-live-readout {
+      text-align: right;
+    }
+
+    .hr-live-num {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--strain-blue);
+      line-height: 1;
+    }
+
+    .hr-live-unit {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .bio-stat-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      background: var(--surface-2);
+      border-radius: 8px;
+      padding: 10px 6px;
+      text-align: center;
+      gap: 4px;
+    }
+
+    .bio-stat-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .bio-stat-lbl {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .bio-stat-val {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--strain-blue);
+    }
+
+    .trend-card {
+      background: #13171c;
+      border: 1px solid var(--border-hairline);
+      border-radius: 10px;
+      padding: 12px;
+    }
+
+    .trend-legend {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .legend-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .legend-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+    }
+
+    .range-list {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .range-item {
+      background: var(--surface-2);
+      border-radius: 7px;
+      padding: 9px 12px;
+    }
+
+    .range-item-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 6px;
+    }
+
+    .range-item-name {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--text-white);
+    }
+
+    .range-item-val {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-white);
+    }
+
+    .range-track {
+      height: 8px;
+      border-radius: 3px;
+      background: repeating-linear-gradient(
+        -45deg,
+        rgba(255, 255, 255, 0.06),
+        rgba(255, 255, 255, 0.06) 4px,
+        rgba(255, 255, 255, 0.02) 4px,
+        rgba(255, 255, 255, 0.02) 8px
+      );
+      position: relative;
+      overflow: hidden;
+    }
+
+    .range-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.6s var(--ease-out), background 0.3s;
+    }
+
+    /* ═══════════════════════════════════════════════════ */
+    /* VIEW 3: HOSPITAL SHARING                            */
+    /* ═══════════════════════════════════════════════════ */
+    .share-hospital-pill {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface-2);
+      border: 1px solid var(--border-hairline);
+      border-radius: 8px;
+      padding: 10px 12px;
+      width: 100%;
+      text-align: left;
+      transition: border-color 0.2s;
+    }
+
+    .share-hospital-pill:hover {
+      border-color: var(--border-active);
+    }
+
+    .share-hosp-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-white);
+    }
+
+    .share-hosp-sub {
+      font-size: 10.5px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .fhir-tag {
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--strain-blue);
+      background: rgba(43, 136, 216, 0.12);
+      padding: 4px 8px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+
+    .share-question-card {
+      background: var(--surface-1);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 15px 14px;
+    }
+
+    .share-q-title {
+      margin: 0 0 6px;
+      font-size: 15.5px;
+      font-weight: 600;
+      line-height: 1.32;
+      color: var(--text-white);
+      letter-spacing: -0.01em;
+    }
+
+    .share-q-desc {
+      margin: 0 0 13px;
+      font-size: 12.5px;
+      line-height: 1.45;
+      color: var(--text-muted);
+    }
+
+    .segmented-yes-no {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      background: #0d1014;
+      border: 1px solid var(--border-hairline);
+      border-radius: 8px;
+      padding: 3px;
+      gap: 4px;
+    }
+
+    .seg-choice {
+      height: 38px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.22s var(--ease-out);
+    }
+
+    .seg-choice:hover {
+      color: var(--text-white);
+    }
+
+    .seg-choice.active-yes {
+      background: var(--text-white);
+      color: #0d1014;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    }
+
+    .seg-choice.active-no {
+      background: var(--surface-3);
+      color: var(--text-white);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    }
+
+    .perm-list {
+      background: var(--surface-1);
+      border: 1px solid var(--border-hairline);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .perm-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 13px;
+      border-bottom: 1px solid var(--border-hairline);
+      transition: background 0.15s;
+    }
+
+    .perm-row:last-child {
+      border-bottom: none;
+    }
+
+    .perm-row:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .perm-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-white);
+    }
+
+    .perm-meta {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+
+    .ios-switch {
+      width: 42px;
+      height: 24px;
+      border-radius: 999px;
+      background: #272e37;
+      border: 1px solid var(--border-hairline);
+      position: relative;
+      transition: background 0.24s var(--ease-out), border-color 0.24s var(--ease-out);
+      flex-shrink: 0;
+    }
+
+    .ios-switch.on {
+      background: var(--strain-blue);
+      border-color: var(--strain-blue);
+    }
+
+    .ios-switch-knob {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #ffffff;
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      transition: transform 0.24s var(--ease-out);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    }
+
+    .ios-switch.on .ios-switch-knob {
+      transform: translateX(18px);
+    }
+
+    .share-footer {
+      margin-top: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .sync-toast {
+      display: none;
+      padding: 9px 12px;
+      border-radius: 8px;
+      background: rgba(43, 136, 216, 0.12);
+      border: 1px solid rgba(43, 136, 216, 0.32);
+      color: var(--text-secondary);
+      font-size: 11.5px;
+      line-height: 1.4;
+      text-align: center;
+      animation: viewEnter 0.25s var(--ease-out);
+    }
+
+    .sync-toast.visible {
+      display: block;
+    }
+
+    .sync-btn {
+      width: 100%;
+      height: 44px;
+      border-radius: 999px;
+      background: var(--text-white);
+      color: #0d1014;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      transition: all 0.2s var(--ease-out);
+    }
+
+    .sync-btn:hover {
+      opacity: 0.92;
+      transform: translateY(-1px);
+    }
+
+    .sync-btn.private-mode {
+      background: var(--surface-2);
+      color: var(--text-white);
+      border: 1px solid var(--border-subtle);
+    }
+
+    /* ─── Intuitive Labeled Bottom Tab Bar ─── */
+    .bottom-dock {
+      background: #12161b;
+      border-top: 1px solid var(--border-hairline);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      height: 58px;
+      padding: 4px 8px 0;
+      flex-shrink: 0;
+    }
+
+    .dock-tab {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      color: var(--text-muted);
+      position: relative;
+      transition: color 0.2s var(--ease-out);
+    }
+
+    .dock-tab:hover {
+      color: var(--text-secondary);
+    }
+
+    .dock-tab.active {
+      color: var(--text-white);
+    }
+
+    .dock-tab.active::before {
+      content: "";
+      position: absolute;
+      top: -4px;
+      width: 28px;
+      height: 2px;
+      border-radius: 2px;
+      background: var(--text-white);
+    }
+
+    .dock-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+
+    .share-dot {
+      position: absolute;
+      top: 6px;
+      right: calc(50% - 16px);
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--strain-blue);
+    }
+
+    .share-dot.off {
+      background: var(--text-dim);
+    }
+
+    .home-indicator-wrap {
+      background: #12161b;
+      padding: 6px 0 8px;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      z-index: 30;
+    }
+
+    .home-indicator {
+      width: 118px;
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.28);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Minimalist Patient Switcher -->
+  <div class="switcher-bar" role="group" aria-label="Switch patient scenario">
+    <span class="switcher-label">Patient</span>
+    <button type="button" class="patient-pill active" data-pt="pt-001" onclick="selectPatient('pt-001')">
+      Jane Doe
+    </button>
+    <button type="button" class="patient-pill" data-pt="pt-002" onclick="selectPatient('pt-002')">
+      Rafael Oduya
+    </button>
+    <button type="button" class="patient-pill" data-pt="pt-003" onclick="selectPatient('pt-003')">
+      Maeve Lin
+    </button>
+  </div>
+
+  <!-- WHOOP Smartphone Frame -->
+  <div class="phone-frame">
+
+    <!-- iOS Status Bar -->
+    <div class="ios-statusbar">
+      <div class="ios-time">
+        <span>11:25</span>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/>
+        </svg>
+      </div>
+      <div class="ios-icons">
+        <svg width="15" height="10" viewBox="0 0 16 11" fill="currentColor">
+          <rect x="0" y="7" width="2.5" height="4" rx="0.5"/>
+          <rect x="4" y="5" width="2.5" height="6" rx="0.5"/>
+          <rect x="8" y="2.5" width="2.5" height="8.5" rx="0.5"/>
+          <rect x="12" y="0" width="2.5" height="11" rx="0.5" opacity="0.35"/>
+        </svg>
+        <span style="font-size: 11px; font-weight: 600;">LTE</span>
+        <svg width="21" height="10" viewBox="0 0 24 12" fill="none">
+          <rect x="0.75" y="0.75" width="19.5" height="10.5" rx="2.5" stroke="currentColor" stroke-width="1.2"/>
+          <rect x="2.5" y="2.5" width="15" height="7" rx="1.2" fill="currentColor"/>
+          <path d="M21.5 4v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- ═════════════════════════════════════════════════════════════ -->
+    <!-- POPUP PROFILE PAGE (OPENS WHEN TOP-LEFT AVATAR IS CLICKED)    -->
+    <!-- ═════════════════════════════════════════════════════════════ -->
+    <div id="profileModal" class="profile-modal" aria-hidden="true">
+
+      <!-- Profile Top Bar (Matches reference screenshot) -->
+      <div class="profile-topbar">
+        <button type="button" class="profile-menu-btn" onclick="toggleProfile(false)" title="Close Profile">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="3" y1="7" x2="21" y2="7"/>
+            <line x1="3" y1="12" x2="21" y2="12"/>
+            <line x1="3" y1="17" x2="21" y2="17"/>
+          </svg>
+        </button>
+
+        <button type="button" class="profile-edit-btn" onclick="focusProfileEdit()" title="Edit Clinical Profile">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 3a2.828 2.828 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Centered Avatar & Member Info -->
+      <div class="profile-hero">
+        <div class="profile-avatar-lg">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+            <circle cx="12" cy="8" r="4.2"/>
+            <path d="M3.5 21c0-4.4 3.8-7 8.5-7s8.5 2.6 8.5 7"/>
+          </svg>
+        </div>
+        <div id="uiProfileHandle" class="profile-handle">@JANEDOE</div>
+        <div id="uiProfileName" class="profile-fullname">JANE DOE</div>
+        <div id="uiProfileAgeLoc" class="profile-age-loc">72 • IE</div>
+      </div>
+
+      <!-- Data Streak & Member Since Split Row -->
+      <div class="profile-meta-strip">
+        <div class="profile-meta-col">
+          <div class="profile-meta-lbl">DATA STREAK</div>
+          <div class="profile-meta-val">5 days</div>
+        </div>
+        <div class="profile-meta-col">
+          <div class="profile-meta-lbl">MEMBER SINCE</div>
+          <div id="uiProfileSince" class="profile-meta-val">Sep, 2023</div>
+        </div>
+      </div>
+
+      <!-- Pill Switcher (Matches LAST 30 DAYS | ALL TIME style) -->
+      <div class="profile-pill-tabs">
+        <div class="profile-pill-tab active">HOSPITAL LINK</div>
+        <div class="profile-pill-tab" onclick="toggleProfile(false); switchMainView('cardio');">30 DAY BIOMETRICS</div>
+      </div>
+
+      <!-- Linked Hospital Centre & Mandatory PPSN / Optional IHI -->
+      <div class="profile-clinical-body">
+        <div class="profile-section-head">
+          <span>LINKED HOSPITAL CENTRE</span>
+          <span>EXTERNAL ENTITY</span>
+        </div>
+
+        <div class="hospital-auth-card">
+          <div class="hospital-auth-top">
+            <div style="flex: 1;">
+              <div class="id-field-label" style="margin-bottom: 2px;">HOSPITAL ACCOUNT</div>
+              <select id="uiHospitalSelect" class="hospital-select" onchange="handleHospitalChange()">
+                <option value="Cork University Hospital (CUH)">Cork University Hospital (CUH)</option>
+                <option value="Mercy University Hospital">Mercy University Hospital</option>
+                <option value="Mater Private Hospital Cork">Mater Private Hospital Cork</option>
+                <option value="St. James's Hospital Dublin">St. James's Hospital Dublin</option>
+              </select>
+            </div>
+            <button type="button" id="uiHospitalAuthBadge" class="auth-status-pill" onclick="toggleHospitalSignIn()">
+              SIGNED IN
+            </button>
+          </div>
+        </div>
+
+        <div class="profile-section-head" style="margin-top: 2px;">
+          <span>HEALTHCARE IDENTIFIERS</span>
+          <span>HSE REGISTRY</span>
+        </div>
+
+        <div class="id-fields-group">
+          <div id="uiPpsnRow" class="id-field-row">
+            <div class="id-field-top">
+              <label for="inputPpsn" class="id-field-label">PPSN (PERSONAL PUBLIC SERVICE NO.)</label>
+              <span class="id-req-badge">MANDATORY</span>
+            </div>
+            <input
+              id="inputPpsn"
+              type="text"
+              class="id-input"
+              placeholder="e.g. 8492014A"
+              maxlength="9"
+              oninput="handleIdentifierInput()"
+            />
+          </div>
+
+          <div class="id-field-row">
+            <div class="id-field-top">
+              <label for="inputIhi" class="id-field-label">IHI (INDIVIDUAL HEALTH IDENTIFIER)</label>
+              <span class="id-req-badge optional">OPTIONAL</span>
+            </div>
+            <input
+              id="inputIhi"
+              type="text"
+              class="id-input"
+              placeholder="Optional 16-digit HSE IHI"
+              maxlength="16"
+              oninput="handleIdentifierInput()"
+            />
+          </div>
+        </div>
+
+        <div style="text-align: center;">
+          <button type="button" id="btnVerifyProfile" class="whoop-outline-pill-btn" onclick="saveProfileDetails()">
+            <span>⌄</span>
+            <span id="btnVerifyProfileText">SAVE &amp; LINK HOSPITAL</span>
+            <span>⌄</span>
+          </button>
+        </div>
+        <div id="uiProfileFeedback" class="profile-save-feedback"></div>
+      </div>
+
+      <!-- Bottom HRV & RHR Baseline Range Strip (Matches bottom of screenshot) -->
+      <div class="profile-bottom-baselines">
+        <div class="baseline-dual-grid">
+          <div class="baseline-box">
+            <div class="baseline-nums">
+              <span class="base-bound">34</span>
+              <span id="uiProfileHrvBase" class="base-center">42</span>
+              <span class="base-bound">64</span>
+            </div>
+            <div class="base-dashed-bar">
+              <div class="base-dashed-line"></div>
+            </div>
+            <div class="base-unit">ms</div>
+          </div>
+
+          <div class="baseline-box">
+            <div class="baseline-nums">
+              <span class="base-bound">52</span>
+              <span id="uiProfileRhrBase" class="base-center">58</span>
+              <span class="base-bound">66</span>
+            </div>
+            <div class="base-dashed-bar">
+              <div class="base-dashed-line"></div>
+            </div>
+            <div class="base-unit">bpm</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-footer-nav">
+        <div class="pager-dots">
+          <span class="pager-dot active"></span>
+          <span class="pager-dot"></span>
+          <span class="pager-dot"></span>
+          <span class="pager-dot"></span>
+          <span class="pager-dot"></span>
+        </div>
+        <button type="button" class="overview-return-btn" onclick="toggleProfile(false)">
+          <span>Overview</span>
+          <span>→</span>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Top WHOOP Header -->
+    <div class="whoop-topbar">
+      <button type="button" class="avatar-circle" onclick="toggleProfile(true)" title="Open Patient Profile">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <circle cx="12" cy="8" r="4"/>
+          <path d="M4 20c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/>
+        </svg>
+        <span id="uiAvatarDot" class="avatar-status-dot"></span>
+      </button>
+
+      <button type="button" class="date-pill" onclick="cycleSubMode()">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+          <path d="M15 18l-6-6 6-6"/>
+        </svg>
+        <span id="uiTopDateLabel">
+          TODAY
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+            <path d="M6 9l6 6 6-6"/>
+          </svg>
+        </span>
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" opacity="0.4">
+          <path d="M9 18l6-6-6-6"/>
+        </svg>
+      </button>
+
+      <button type="button" class="live-hr-pill" onclick="switchMainView('cardio')" title="Open Cardiology Biometrics">
+        <span class="pulse-dot"></span>
+        <span id="uiHeaderHr">58 BPM</span>
+      </button>
+    </div>
+
+    <div class="views-viewport">
+
+      <!-- ═════════════════════════════════════════════════════════════ -->
+      <!-- VIEW 1: OVERVIEW                                              -->
+      <!-- ═════════════════════════════════════════════════════════════ -->
+      <div id="viewOverview" class="app-view active">
+
+        <div class="sub-tabs">
+          <button type="button" class="sub-tab active" data-sub="overview" onclick="setOverviewFocus('overview')">OVERVIEW</button>
+          <button type="button" class="sub-tab" data-sub="strain" onclick="setOverviewFocus('strain')">STRAIN</button>
+          <button type="button" class="sub-tab" data-sub="recovery" onclick="setOverviewFocus('recovery')">RECOVERY</button>
+          <button type="button" class="sub-tab" data-sub="sleep" onclick="setOverviewFocus('sleep')">SLEEP</button>
+        </div>
+
+        <div class="hero-section">
+          <div class="hero-grid">
+            <div class="hero-side-left">
+              <div id="uiRecoveryPct" class="hero-big-val" style="color: var(--rec-green);">68%</div>
+              <div id="uiRecoveryLabel" class="hero-big-label" style="color: var(--rec-green);">RECOVERY</div>
+              <div class="hero-sub-label">HRV</div>
+              <div id="uiHrvVal" class="hero-sub-val">42 ms</div>
+            </div>
+
+            <div class="ring-container" onclick="switchMainView('cardio')" title="Tap to inspect Cardiology & Biometrics">
+              <svg width="130" height="130" viewBox="0 0 132 132">
+                <circle cx="66" cy="66" r="54" fill="none" stroke="#242b33" stroke-width="7.5" />
+                <circle
+                  id="svgStrainArc"
+                  class="ring-arc"
+                  cx="66"
+                  cy="66"
+                  r="54"
+                  fill="none"
+                  stroke="#2b88d8"
+                  stroke-width="7.5"
+                  stroke-linecap="round"
+                  stroke-dasharray="339.29"
+                  stroke-dashoffset="160"
+                  transform="rotate(-90 66 66)"
+                />
+                <circle cx="66" cy="66" r="41" fill="none" stroke="#242b33" stroke-width="7.5" />
+                <circle
+                  id="svgRecoveryArc"
+                  class="ring-arc"
+                  cx="66"
+                  cy="66"
+                  r="41"
+                  fill="none"
+                  stroke="#26d07c"
+                  stroke-width="7.5"
+                  stroke-linecap="round"
+                  stroke-dasharray="257.61"
+                  stroke-dashoffset="82"
+                  transform="rotate(-90 66 66)"
+                />
+                <path
+                  d="M55 61 L59.5 72 L64 63 L68.5 72 L73 61"
+                  fill="none"
+                  stroke="#7c8590"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </div>
+
+            <div class="hero-side-right">
+              <div id="uiStrainVal" class="hero-big-val" style="color: var(--strain-blue);">11.2</div>
+              <div class="hero-big-label" style="color: var(--strain-blue);">STRAIN</div>
+              <div class="hero-sub-label">RHR</div>
+              <div id="uiRhrVal" class="hero-sub-val">58 bpm</div>
+            </div>
+          </div>
+
+          <p id="uiInsightText" class="insight-text">
+            Based on your 68% Recovery, your cardiovascular metrics are steady and within your <strong>optimal baseline range</strong>.
+          </p>
+        </div>
+
+        <div class="action-divider">
+          <button type="button" class="round-mini-btn" onclick="switchMainView('cardio')" title="View Heart Rate Stream">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+          </button>
+          <div class="divider-line"></div>
+          <button type="button" class="start-activity-pill" onclick="switchMainView('cardio')">CARDIAC TELEMETRY</button>
+          <div class="divider-line"></div>
+          <button type="button" class="round-mini-btn" onclick="toggleProfile(true)" title="Patient Profile & PPSN">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <circle cx="12" cy="8" r="4"/>
+              <path d="M4 20c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="activity-list">
+          <button type="button" class="activity-row" onclick="switchMainView('cardio')">
+            <div class="activity-left">
+              <div class="activity-badge strain">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                </svg>
+                <span id="uiRowStrain">11.2</span>
+              </div>
+              <div>
+                <div class="activity-name">CARDIAC CYCLE</div>
+                <div class="activity-sub">Tap to view HR stream &amp; zones</div>
+              </div>
+            </div>
+            <div class="activity-times">
+              <div id="uiAvgHr">Avg 70 bpm</div>
+              <div id="uiMaxHr">Max 145 bpm</div>
+            </div>
+          </button>
+
+          <button type="button" class="activity-row" onclick="switchMainView('cardio')">
+            <div class="activity-left">
+              <div class="activity-badge sleep">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+                </svg>
+                <span id="uiRowSleep">7:00</span>
+              </div>
+              <div>
+                <div class="activity-name">SLEEP BIOMETRICS</div>
+                <div class="activity-sub" id="uiSleepSub">91% efficiency · SpO2 97%</div>
+              </div>
+            </div>
+            <div class="activity-times">
+              <div>7:52 am</div>
+              <div>12:52 am</div>
+            </div>
+          </button>
+        </div>
+
+        <div class="bottom-widgets">
+          <button type="button" class="monitor-card" onclick="switchMainView('cardio')">
+            <div class="monitor-left">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a94a0" stroke-width="1.8" stroke-linecap="round">
+                <circle cx="11" cy="11" r="7"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                <polyline points="7.5 11 9.5 11 10.5 8.5 12 13.5 13 11 14.5 11"/>
+              </svg>
+              <div class="monitor-title">HEALTH<br/>MONITOR</div>
+            </div>
+            <div class="monitor-right">
+              <div>
+                <div id="uiMonitorCount" class="monitor-status-top">5/5 METRICS</div>
+                <div id="uiMonitorStatus" class="monitor-status-sub">WITHIN RANGE</div>
+              </div>
+              <div id="uiMonitorBox" class="check-square">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              </div>
+            </div>
+          </button>
+
+          <div class="device-bar">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <svg width="17" height="9" viewBox="0 0 24 12" fill="none">
+                <rect x="0.75" y="0.75" width="19.5" height="10.5" rx="2" stroke="currentColor" stroke-width="1.4"/>
+                <rect x="2.5" y="2.5" width="11" height="7" rx="1" fill="currentColor"/>
+              </svg>
+              <span>58%</span>
+            </div>
+
+            <div class="device-chain">
+              <svg width="13" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <ellipse cx="12" cy="12" rx="5" ry="8"/>
+              </svg>
+              <div class="chain-line"></div>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#26d07c" stroke-width="2.2">
+                <circle cx="12" cy="12" r="9"/>
+                <polyline points="8 12 11 15 16 9"/>
+              </svg>
+              <div class="chain-line"></div>
+              <svg width="12" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <rect x="6" y="2" width="12" height="20" rx="2"/>
+              </svg>
+              <div class="chain-line"></div>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#26d07c" stroke-width="2.2">
+                <circle cx="12" cy="12" r="9"/>
+                <polyline points="8 12 11 15 16 9"/>
+              </svg>
+              <div class="chain-line"></div>
+              <svg width="15" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z"/>
+              </svg>
+            </div>
+
+            <span>11:20am</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ═════════════════════════════════════════════════════════════ -->
+      <!-- VIEW 2: CARDIOLOGY & BIOMETRICS                               -->
+      <!-- ═════════════════════════════════════════════════════════════ -->
+      <div id="viewCardio" class="app-view">
+        <div class="view-pad">
+
+          <div class="hr-graph-card">
+            <div class="hr-graph-head">
+              <div>
+                <div class="hr-graph-title">CONTINUOUS HEART RATE</div>
+                <div class="hr-graph-time">9:34 am – 11:20 am · Tap graph to inspect</div>
+              </div>
+              <div class="hr-live-readout">
+                <div id="uiInspectHrVal" class="hr-live-num">58</div>
+                <div id="uiInspectHrTime" class="hr-live-unit">BPM · RESTING</div>
+              </div>
+            </div>
+
+            <svg id="svgHrWaveform" width="100%" height="118" viewBox="0 0 320 118" style="overflow: visible; cursor: crosshair;">
+              <defs>
+                <linearGradient id="hrAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#2b88d8" stop-opacity="0.32"/>
+                  <stop offset="100%" stop-color="#2b88d8" stop-opacity="0.0"/>
+                </linearGradient>
+              </defs>
+              <line x1="24" y1="16" x2="314" y2="16" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+              <line x1="24" y1="48" x2="314" y2="48" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+              <line x1="24" y1="80" x2="314" y2="80" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+              <line x1="24" y1="104" x2="314" y2="104" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+
+              <text x="0" y="19" fill="#68727e" font-size="8.5" font-weight="600">160</text>
+              <text x="0" y="51" fill="#68727e" font-size="8.5" font-weight="600">120</text>
+              <text x="0" y="83" fill="#68727e" font-size="8.5" font-weight="600">80</text>
+              <text x="0" y="106" fill="#68727e" font-size="8.5" font-weight="600">50</text>
+
+              <path id="svgHrArea" d="" fill="url(#hrAreaGrad)" />
+              <path id="svgHrLine" d="" fill="none" stroke="#2b88d8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+
+              <line id="svgScrubLine" x1="290" y1="12" x2="290" y2="104" stroke="rgba(255,255,255,0.25)" stroke-width="1" stroke-dasharray="2 2"/>
+              <circle id="svgScrubDot" cx="290" cy="70" r="4" fill="#2b88d8" stroke="#ffffff" stroke-width="1.5"/>
+            </svg>
+          </div>
+
+          <div class="bio-stat-strip">
+            <div class="bio-stat-col">
+              <span class="bio-stat-lbl">RESTING HR</span>
+              <span id="uiCardioRhr" class="bio-stat-val">58</span>
+            </div>
+            <div class="bio-stat-col">
+              <span class="bio-stat-lbl">HRV (RMSSD)</span>
+              <span id="uiCardioHrv" class="bio-stat-val">42</span>
+            </div>
+            <div class="bio-stat-col">
+              <span class="bio-stat-lbl">SPO2</span>
+              <span id="uiCardioSpo2" class="bio-stat-val">97%</span>
+            </div>
+            <div class="bio-stat-col">
+              <span class="bio-stat-lbl">MAX HR</span>
+              <span id="uiCardioMaxHr" class="bio-stat-val">145</span>
+            </div>
+          </div>
+
+          <div class="trend-card">
+            <div class="trend-legend">
+              <span class="legend-pill" style="color: var(--strain-blue);">
+                <span class="legend-dot" style="background: var(--strain-blue);"></span>
+                5-DAY RHR (BPM)
+              </span>
+              <span class="legend-pill" style="color: var(--rec-green);">
+                <span class="legend-dot" style="background: var(--rec-green);"></span>
+                HRV (MS)
+              </span>
+            </div>
+            <svg id="svgTrendChart" width="100%" height="108" viewBox="0 0 320 108"></svg>
+          </div>
+
+          <div>
+            <div class="section-kicker-row" style="margin-bottom: 6px;">
+              <span class="section-kicker">BIOMETRIC BASELINE RANGES</span>
+              <span class="section-kicker-sub">Smartwatch Sensors</span>
+            </div>
+            <div id="uiRangeList" class="range-list"></div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ═════════════════════════════════════════════════════════════ -->
+      <!-- VIEW 3: HOSPITAL SHARING                                      -->
+      <!-- ═════════════════════════════════════════════════════════════ -->
+      <div id="viewShare" class="app-view">
+        <div class="view-pad">
+
+          <!-- Hospital Destination Pill (Click to open Profile & change Hospital/PPSN) -->
+          <button type="button" class="share-hospital-pill" onclick="toggleProfile(true)" title="Edit Linked Hospital & PPSN in Profile">
+            <div>
+              <div id="uiShareHospitalName" class="share-hosp-name">Cork University Hospital (CUH)</div>
+              <div id="uiSharePatientIds" class="share-hosp-sub">PPSN: 8492014A · Signed In</div>
+            </div>
+            <span class="fhir-tag">PROFILE ›</span>
+          </button>
+
+          <div class="share-question-card">
+            <h2 class="share-q-title">
+              Share your cardiology &amp; biometric data with your physician?
+            </h2>
+            <p class="share-q-desc">
+              Allow your care team to receive your daily resting heart rate, HRV, blood oxygen, and sleep recovery metrics. You can change this anytime.
+            </p>
+
+            <div class="segmented-yes-no" role="group" aria-label="Share data with hospital">
+              <button
+                type="button"
+                id="btnSegYes"
+                class="seg-choice active-yes"
+                onclick="setMasterConsent(true)"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                <span>Yes, Share</span>
+              </button>
+
+              <button
+                type="button"
+                id="btnSegNo"
+                class="seg-choice"
+                onclick="setMasterConsent(false)"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+                <span>No, Private</span>
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <div class="section-kicker-row" style="margin-bottom: 6px;">
+              <span class="section-kicker">BIOMETRIC PERMISSIONS</span>
+              <span id="uiPermCounter" class="section-kicker-sub">5 of 5 enabled</span>
+            </div>
+
+            <div id="uiPermList" class="perm-list"></div>
+          </div>
+
+          <div class="share-footer">
+            <div id="uiSyncToast" class="sync-toast"></div>
+            <button
+              type="button"
+              id="btnSyncHospital"
+              class="sync-btn"
+              onclick="saveAndSync()"
+            >
+              SYNC WITH HOSPITAL
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Intuitive Labeled Bottom Tab Bar -->
+    <nav class="bottom-dock" aria-label="Primary Navigation">
+      <button type="button" id="dockOverview" class="dock-tab active" onclick="switchMainView('overview')">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1v-9.5z"/>
+          <polyline points="8 15 11 12 13.5 14.5 16.5 11"/>
+        </svg>
+        <span class="dock-label">Overview</span>
+      </button>
+
+      <button type="button" id="dockCardio" class="dock-tab" onclick="switchMainView('cardio')">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+        <span class="dock-label">Cardio &amp; Vitals</span>
+      </button>
+
+      <button type="button" id="dockShare" class="dock-tab" onclick="switchMainView('share')">
+        <span id="uiDockShareDot" class="share-dot"></span>
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <path d="M9 12l2 2 4-4"/>
+        </svg>
+        <span class="dock-label">Hospital Share</span>
+      </button>
+    </nav>
+
+    <div class="home-indicator-wrap">
+      <div class="home-indicator"></div>
+    </div>
+
+  </div>
+
+  <script>
+    const METRICS = [
+      {
+        key: "restingHeartRate",
+        title: "Resting Heart Rate",
+        shortLabel: "RHR",
+        desc: "Baseline cardiac rate at rest",
+        valueText: (s) => (s?.recovery?.restingHeartRate != null ? `${s.recovery.restingHeartRate} bpm` : "—"),
+        pctOfRange: (s) => Math.min(Math.max(((s?.recovery?.restingHeartRate ?? 58) - 40) / 60, 0.1), 0.96),
+        isWarn: (s) => (s?.recovery?.restingHeartRate ?? 58) >= 80,
+      },
+      {
+        key: "hrvMs",
+        title: "Heart Rate Variability (HRV)",
+        shortLabel: "HRV",
+        desc: "Beat-to-beat interval variation",
+        valueText: (s) => (s?.recovery?.hrvMs != null ? `${s.recovery.hrvMs} ms` : "—"),
+        pctOfRange: (s) => Math.min(Math.max((s?.recovery?.hrvMs ?? 42) / 90, 0.12), 0.95),
+        isWarn: (s) => (s?.recovery?.hrvMs ?? 42) <= 25,
+      },
+      {
+        key: "spo2",
+        title: "Blood Oxygen (SpO2)",
+        shortLabel: "SPO2",
+        desc: "Peripheral oxygen saturation",
+        valueText: (s) => (s?.recovery?.spo2 != null ? `${s.recovery.spo2}%` : "—"),
+        pctOfRange: (s) => Math.min(Math.max(((s?.recovery?.spo2 ?? 97) - 85) / 15, 0.15), 0.98),
+        isWarn: (s) => (s?.recovery?.spo2 ?? 97) <= 92,
+      },
+      {
+        key: "sleepDurationMs",
+        title: "Sleep Duration",
+        shortLabel: "SLEEP",
+        desc: "Overnight restorative duration",
+        valueText: (s) => {
+          const ms = s?.sleep?.durationMs;
+          return ms != null ? `${(ms / 3600000).toFixed(1)} hrs` : "—";
+        },
+        pctOfRange: (s) => Math.min(Math.max((s?.sleep?.durationMs ?? 25200000) / 32400000, 0.15), 0.96),
+        isWarn: (s) => (s?.sleep?.durationMs ?? 25200000) < 21600000,
+      },
+      {
+        key: "sleepEfficiency",
+        title: "Sleep Efficiency",
+        shortLabel: "SLEEP EFF",
+        desc: "Time asleep vs. time in bed",
+        valueText: (s) => {
+          const eff = s?.sleep?.efficiency;
+          return eff != null ? `${Math.round(eff * 100)}%` : "—";
+        },
+        pctOfRange: (s) => Math.min(Math.max(s?.sleep?.efficiency ?? 0.91, 0.15), 0.98),
+        isWarn: (s) => (s?.sleep?.efficiency ?? 0.91) <= 0.75,
+      },
+    ];
+
+    // Profile metadata per patient (Linked Hospital, Mandatory PPSN, Optional IHI)
+    const PATIENT_PROFILES = {
+      "pt-001": {
+        handle: "@JANEDOE",
+        ageLoc: "72 • IE",
+        memberSince: "Sep, 2023",
+        hospital: "Cork University Hospital (CUH)",
+        signedIn: true,
+        ppsn: "8492014A",
+        ihi: "8000000049102938",
+      },
+      "pt-002": {
+        handle: "@RAFAELODUYA",
+        ageLoc: "76 • IE",
+        memberSince: "Mar, 2022",
+        hospital: "Cork University Hospital (CUH)",
+        signedIn: true,
+        ppsn: "3910482B",
+        ihi: "8000000083716254",
+      },
+      "pt-003": {
+        handle: "@MAEVELIN",
+        ageLoc: "69 • IE",
+        memberSince: "Jan, 2024",
+        hospital: "Mercy University Hospital",
+        signedIn: true,
+        ppsn: "7183920W",
+        ihi: "",
+      },
+    };
+
+    const FALLBACK_PATIENTS = {
+      "pt-001": {
+        snapshot: {
+          patient: { id: "pt-001", displayName: "Jane Doe" },
+          takenAt: "2026-11-07T08:00:00Z",
+          recovery: { score: 68, restingHeartRate: 58, hrvMs: 42, spo2: 97 },
+          sleep: { durationMs: 25200000, efficiency: 0.91, disturbances: 3 },
+          cycle: { strain: 11.2, averageHeartRate: 70, maxHeartRate: 145 },
+        },
+        history: [
+          { recovery: { score: 70, restingHeartRate: 58, hrvMs: 48 } },
+          { recovery: { score: 72, restingHeartRate: 57, hrvMs: 50 } },
+          { recovery: { score: 65, restingHeartRate: 60, hrvMs: 44 } },
+          { recovery: { score: 68, restingHeartRate: 59, hrvMs: 45 } },
+          { recovery: { score: 68, restingHeartRate: 58, hrvMs: 42 } },
+        ],
+        hrSeries: [56, 58, 62, 68, 75, 92, 118, 134, 145, 128, 104, 86, 74, 65, 60, 58],
+        allow: ["restingHeartRate", "hrvMs", "spo2", "sleepDurationMs", "sleepEfficiency"],
+      },
+      "pt-002": {
+        snapshot: {
+          patient: { id: "pt-002", displayName: "Rafael Oduya" },
+          takenAt: "2026-11-07T08:00:00Z",
+          recovery: { score: 28, restingHeartRate: 88, hrvMs: 19, spo2: 91 },
+          sleep: { durationMs: 18000000, efficiency: 0.68, disturbances: 7 },
+          cycle: { strain: 14.6, averageHeartRate: 84, maxHeartRate: 162 },
+        },
+        history: [
+          { recovery: { score: 64, restingHeartRate: 62, hrvMs: 40 } },
+          { recovery: { score: 54, restingHeartRate: 68, hrvMs: 35 } },
+          { recovery: { score: 42, restingHeartRate: 74, hrvMs: 30 } },
+          { recovery: { score: 33, restingHeartRate: 81, hrvMs: 24 } },
+          { recovery: { score: 28, restingHeartRate: 88, hrvMs: 19 } },
+        ],
+        hrSeries: [82, 86, 94, 108, 126, 142, 155, 162, 158, 144, 128, 114, 102, 95, 90, 88],
+        allow: ["restingHeartRate", "hrvMs", "spo2", "sleepEfficiency"],
+      },
+      "pt-003": {
+        snapshot: {
+          patient: { id: "pt-003", displayName: "Maeve Lin" },
+          takenAt: "2026-11-07T08:00:00Z",
+          recovery: { score: 71, restingHeartRate: 59, hrvMs: 48, spo2: 97 },
+          sleep: { durationMs: 26400000, efficiency: 0.92, disturbances: 2 },
+          cycle: { strain: 10.4, averageHeartRate: 68, maxHeartRate: 138 },
+        },
+        history: [
+          { recovery: { score: 45, restingHeartRate: 72, hrvMs: 32 } },
+          { recovery: { score: 52, restingHeartRate: 68, hrvMs: 36 } },
+          { recovery: { score: 60, restingHeartRate: 64, hrvMs: 41 } },
+          { recovery: { score: 66, restingHeartRate: 61, hrvMs: 45 } },
+          { recovery: { score: 71, restingHeartRate: 59, hrvMs: 48 } },
+        ],
+        hrSeries: [58, 60, 64, 72, 88, 106, 124, 138, 122, 98, 82, 70, 64, 61, 60, 59],
+        allow: ["restingHeartRate", "sleepDurationMs"],
+      },
+    };
+
+    const GATEWAY_BASE = window.location.protocol.startsWith("http")
+      ? `http://${window.location.hostname}:4002`
+      : "http://localhost:4002";
+
+    let currentPatientId = "pt-001";
+    let currentSnapshot = FALLBACK_PATIENTS["pt-001"].snapshot;
+    let currentHistory = FALLBACK_PATIENTS["pt-001"].history;
+    let allowedSet = new Set(FALLBACK_PATIENTS["pt-001"].allow);
+    let currentOverviewFocus = "overview";
+
+    function toggleProfile(open) {
+      const modal = document.getElementById("profileModal");
+      const shouldOpen = open !== undefined ? open : !modal.classList.contains("open");
+      modal.classList.toggle("open", shouldOpen);
+      modal.setAttribute("aria-hidden", String(!shouldOpen));
+      document.getElementById("uiProfileFeedback").textContent = "";
+    }
+
+    function focusProfileEdit() {
+      const ppsnInput = document.getElementById("inputPpsn");
+      ppsnInput.focus();
+      ppsnInput.select();
+    }
+
+    function handleHospitalChange() {
+      const prof = PATIENT_PROFILES[currentPatientId];
+      prof.hospital = document.getElementById("uiHospitalSelect").value;
+      document.getElementById("uiProfileFeedback").textContent = "";
+      renderProfileAndShareHeader();
+    }
+
+    function toggleHospitalSignIn() {
+      const prof = PATIENT_PROFILES[currentPatientId];
+      if (!prof.signedIn && !prof.ppsn.trim()) {
+        document.getElementById("uiPpsnRow").classList.add("invalid");
+        const fb = document.getElementById("uiProfileFeedback");
+        fb.className = "profile-save-feedback err";
+        fb.textContent = "Mandatory PPSN is required to sign in to hospital.";
+        document.getElementById("inputPpsn").focus();
+        return;
+      }
+      prof.signedIn = !prof.signedIn;
+      renderProfileAndShareHeader();
+    }
+
+    function handleIdentifierInput() {
+      const prof = PATIENT_PROFILES[currentPatientId];
+      prof.ppsn = document.getElementById("inputPpsn").value.trim().toUpperCase();
+      prof.ihi = document.getElementById("inputIhi").value.trim();
+      if (prof.ppsn) {
+        document.getElementById("uiPpsnRow").classList.remove("invalid");
+      }
+      document.getElementById("uiProfileFeedback").textContent = "";
+      renderProfileAndShareHeader();
+    }
+
+    function saveProfileDetails() {
+      const prof = PATIENT_PROFILES[currentPatientId];
+      const ppsn = document.getElementById("inputPpsn").value.trim().toUpperCase();
+      const ihi = document.getElementById("inputIhi").value.trim();
+      const fb = document.getElementById("uiProfileFeedback");
+
+      if (!ppsn) {
+        document.getElementById("uiPpsnRow").classList.add("invalid");
+        fb.className = "profile-save-feedback err";
+        fb.textContent = "PPSN is mandatory to link your hospital account.";
+        document.getElementById("inputPpsn").focus();
+        return;
+      }
+
+      document.getElementById("uiPpsnRow").classList.remove("invalid");
+      prof.ppsn = ppsn;
+      prof.ihi = ihi;
+      prof.hospital = document.getElementById("uiHospitalSelect").value;
+      prof.signedIn = true;
+
+      fb.className = "profile-save-feedback";
+      fb.textContent = `Signed in to ${prof.hospital} · PPSN verified`;
+      renderProfileAndShareHeader();
+    }
+
+    function renderProfileAndShareHeader() {
+      const prof = PATIENT_PROFILES[currentPatientId];
+      const name = (currentSnapshot?.patient?.displayName || "Jane Doe").toUpperCase();
+      const r = currentSnapshot?.recovery || {};
+
+      document.getElementById("uiProfileHandle").textContent = prof.handle;
+      document.getElementById("uiProfileName").textContent = name;
+      document.getElementById("uiProfileAgeLoc").textContent = prof.ageLoc;
+      document.getElementById("uiProfileSince").textContent = prof.memberSince;
+      document.getElementById("uiHospitalSelect").value = prof.hospital;
+
+      if (document.activeElement !== document.getElementById("inputPpsn")) {
+        document.getElementById("inputPpsn").value = prof.ppsn;
+      }
+      if (document.activeElement !== document.getElementById("inputIhi")) {
+        document.getElementById("inputIhi").value = prof.ihi;
+      }
+
+      const isLinked = prof.signedIn && Boolean(prof.ppsn);
+      const badgeEl = document.getElementById("uiHospitalAuthBadge");
+      badgeEl.className = `auth-status-pill ${isLinked ? "" : "signed-out"}`;
+      badgeEl.textContent = isLinked ? "SIGNED IN" : "SIGN IN";
+
+      document.getElementById("btnVerifyProfileText").textContent = isLinked
+        ? "UPDATE HOSPITAL LINK"
+        : "SIGN IN & LINK HOSPITAL";
+
+      document.getElementById("uiAvatarDot").className = `avatar-status-dot ${isLinked ? "" : "unlinked"}`;
+
+      document.getElementById("uiProfileHrvBase").textContent = r.hrvMs ?? 42;
+      document.getElementById("uiProfileRhrBase").textContent = r.restingHeartRate ?? 58;
+
+      // Update Hospital Share header pill
+      document.getElementById("uiShareHospitalName").textContent = prof.hospital;
+      const ihiPart = prof.ihi ? ` · IHI: ...${prof.ihi.slice(-4)}` : " · IHI: Not set";
+      document.getElementById("uiSharePatientIds").textContent = isLinked
+        ? `PPSN: ${prof.ppsn}${ihiPart} · Signed In`
+        : `Not signed in · Tap to enter mandatory PPSN`;
+    }
+
+    function switchMainView(view) {
+      document.getElementById("viewOverview").classList.toggle("active", view === "overview");
+      document.getElementById("viewCardio").classList.toggle("active", view === "cardio");
+      document.getElementById("viewShare").classList.toggle("active", view === "share");
+
+      document.getElementById("dockOverview").classList.toggle("active", view === "overview");
+      document.getElementById("dockCardio").classList.toggle("active", view === "cardio");
+      document.getElementById("dockShare").classList.toggle("active", view === "share");
+    }
+
+    function setOverviewFocus(focus) {
+      currentOverviewFocus = focus;
+      document.querySelectorAll(".sub-tab").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.sub === focus);
+      });
+      renderOverviewInsight();
+    }
+
+    function cycleSubMode() {
+      const views = ["overview", "cardio", "share"];
+      const current = document.getElementById("viewCardio").classList.contains("active")
+        ? "cardio"
+        : document.getElementById("viewShare").classList.contains("active")
+        ? "share"
+        : "overview";
+      const next = views[(views.indexOf(current) + 1) % views.length];
+      switchMainView(next);
+    }
+
+    async function selectPatient(patientId) {
+      currentPatientId = patientId;
+      document.querySelectorAll(".patient-pill").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.pt === patientId);
+      });
+      document.getElementById("uiSyncToast").className = "sync-toast";
+      document.getElementById("uiProfileFeedback").textContent = "";
+
+      try {
+        const [snapRes, histRes, consentRes] = await Promise.all([
+          fetch(`${GATEWAY_BASE}/patients/${patientId}/snapshot`),
+          fetch(`${GATEWAY_BASE}/patients/${patientId}/history`),
+          fetch(`${GATEWAY_BASE}/consent/${patientId}`),
+        ]);
+        currentSnapshot = snapRes.ok ? await snapRes.json() : FALLBACK_PATIENTS[patientId].snapshot;
+        currentHistory = histRes.ok ? await histRes.json() : FALLBACK_PATIENTS[patientId].history;
+        if (consentRes.ok) {
+          const c = await consentRes.json();
+          allowedSet = new Set(c.allow || []);
+        } else {
+          allowedSet = new Set(FALLBACK_PATIENTS[patientId].allow);
+        }
+      } catch (_e) {
+        currentSnapshot = FALLBACK_PATIENTS[patientId].snapshot;
+        currentHistory = FALLBACK_PATIENTS[patientId].history;
+        allowedSet = new Set(FALLBACK_PATIENTS[patientId].allow);
+      }
+
+      renderAll();
+    }
+
+    function setMasterConsent(shareAll) {
+      if (shareAll) {
+        METRICS.forEach((m) => allowedSet.add(m.key));
+      } else {
+        allowedSet.clear();
+      }
+      document.getElementById("uiSyncToast").className = "sync-toast";
+      renderAll();
+    }
+
+    function toggleMetric(key) {
+      if (allowedSet.has(key)) {
+        allowedSet.delete(key);
+      } else {
+        allowedSet.add(key);
+      }
+      document.getElementById("uiSyncToast").className = "sync-toast";
+      renderAll();
+    }
+
+    function formatHoursColon(durationMs) {
+      if (durationMs == null) return "0:00";
+      const totalMins = Math.round(durationMs / 60000);
+      const hrs = Math.floor(totalMins / 60);
+      const mins = String(totalMins % 60).padStart(2, "0");
+      return `${hrs}:${mins}`;
+    }
+
+    function renderOverviewInsight() {
+      const r = currentSnapshot.recovery || {};
+      const s = currentSnapshot.sleep || {};
+      const c = currentSnapshot.cycle || {};
+      const insightEl = document.getElementById("uiInsightText");
+
+      if (currentOverviewFocus === "strain") {
+        insightEl.innerHTML = `Day Strain is <strong>${(c.strain ?? 11.2).toFixed(1)}</strong> with an average heart rate of <strong>${c.averageHeartRate ?? 70} bpm</strong> and peak of <strong>${c.maxHeartRate ?? 145} bpm</strong>.`;
+      } else if (currentOverviewFocus === "recovery") {
+        insightEl.innerHTML = `Recovery is <strong>${r.score ?? 68}%</strong> · HRV is <strong>${r.hrvMs ?? 42} ms</strong> and Resting Heart Rate is <strong>${r.restingHeartRate ?? 58} bpm</strong>.`;
+      } else if (currentOverviewFocus === "sleep") {
+        insightEl.innerHTML = `You slept <strong>${formatHoursColon(s.durationMs)} hrs</strong> at <strong>${Math.round((s.efficiency ?? 0.91) * 100)}% efficiency</strong> with <strong>${r.spo2 ?? 97}% SpO2</strong>.`;
+      } else if ((r.score ?? 68) < 34) {
+        insightEl.innerHTML = `Your Recovery is <strong>${r.score}%</strong> with an elevated Resting Heart Rate of <strong>${r.restingHeartRate} bpm</strong>. Consider syncing with your cardiologist.`;
+      } else {
+        insightEl.innerHTML = `Based on your ${r.score ?? 68}% Recovery, your cardiovascular metrics are steady and within your <strong>optimal baseline range</strong>.`;
+      }
+    }
+
+    function renderAll() {
+      const r = currentSnapshot.recovery || {};
+      const s = currentSnapshot.sleep || {};
+      const c = currentSnapshot.cycle || {};
+
+      const score = r.score ?? 68;
+      const strain = c.strain ?? 11.2;
+      const hrv = r.hrvMs ?? 42;
+      const rhr = r.restingHeartRate ?? 58;
+      const spo2 = r.spo2 ?? 97;
+
+      document.getElementById("uiHeaderHr").textContent = `${rhr} BPM`;
+
+      let recColor = "var(--rec-green)";
+      if (score < 34) recColor = "var(--rec-red)";
+      else if (score < 67) recColor = "var(--rec-yellow)";
+
+      const recPctEl = document.getElementById("uiRecoveryPct");
+      const recLblEl = document.getElementById("uiRecoveryLabel");
+      recPctEl.textContent = `${score}%`;
+      recPctEl.style.color = recColor;
+      recLblEl.style.color = recColor;
+
+      document.getElementById("uiHrvVal").textContent = `${hrv} ms`;
+      document.getElementById("uiStrainVal").textContent = strain.toFixed(1);
+      document.getElementById("uiRhrVal").textContent = `${rhr} bpm`;
+
+      const strainCircumference = 339.29;
+      const strainRatio = Math.min(Math.max(strain / 21, 0.05), 1);
+      document.getElementById("svgStrainArc").setAttribute(
+        "stroke-dashoffset",
+        String((strainCircumference * (1 - strainRatio)).toFixed(1))
+      );
+
+      const recCircumference = 257.61;
+      const recRatio = Math.min(Math.max(score / 100, 0.05), 1);
+      const recArc = document.getElementById("svgRecoveryArc");
+      recArc.setAttribute("stroke-dashoffset", String((recCircumference * (1 - recRatio)).toFixed(1)));
+      recArc.setAttribute("stroke", score < 34 ? "#e53935" : score < 67 ? "#f0c419" : "#26d07c");
+
+      renderOverviewInsight();
+
+      document.getElementById("uiRowStrain").textContent = strain.toFixed(1);
+      document.getElementById("uiAvgHr").textContent = `Avg ${c.averageHeartRate ?? 70} bpm`;
+      document.getElementById("uiMaxHr").textContent = `Max ${c.maxHeartRate ?? 145} bpm`;
+      document.getElementById("uiRowSleep").textContent = formatHoursColon(s.durationMs);
+      document.getElementById("uiSleepSub").textContent = `${Math.round((s.efficiency ?? 0.91) * 100)}% efficiency · SpO2 ${spo2}%`;
+
+      let outOfRange = 0;
+      if (rhr >= 80) outOfRange++;
+      if (hrv <= 25) outOfRange++;
+      if (spo2 <= 92) outOfRange++;
+      const inRange = 5 - outOfRange;
+
+      document.getElementById("uiMonitorCount").textContent = `${inRange}/5 METRICS`;
+      const monitorStatusEl = document.getElementById("uiMonitorStatus");
+      const monitorBoxEl = document.getElementById("uiMonitorBox");
+      if (outOfRange > 0) {
+        monitorStatusEl.textContent = "OUT OF RANGE";
+        monitorStatusEl.className = "monitor-status-sub warn";
+        monitorBoxEl.className = "check-square warn";
+        monitorBoxEl.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="7" x2="12" y2="13"/><circle cx="12" cy="17" r="1"/></svg>`;
+      } else {
+        monitorStatusEl.textContent = "WITHIN RANGE";
+        monitorStatusEl.className = "monitor-status-sub";
+        monitorBoxEl.className = "check-square";
+        monitorBoxEl.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+      }
+
+      renderProfileAndShareHeader();
+      renderCardioView();
+      renderShareView();
+    }
+
+    function renderCardioView() {
+      const r = currentSnapshot.recovery || {};
+      const c = currentSnapshot.cycle || {};
+
+      document.getElementById("uiCardioRhr").textContent = r.restingHeartRate ?? 58;
+      document.getElementById("uiCardioHrv").textContent = r.hrvMs ?? 42;
+      document.getElementById("uiCardioSpo2").textContent = `${r.spo2 ?? 97}%`;
+      document.getElementById("uiCardioMaxHr").textContent = c.maxHeartRate ?? 145;
+
+      const series = (FALLBACK_PATIENTS[currentPatientId] || FALLBACK_PATIENTS["pt-001"]).hrSeries;
+      const xStart = 28;
+      const xEnd = 310;
+      const yTop = 16;
+      const yBottom = 102;
+
+      const pts = series.map((bpm, idx) => {
+        const x = xStart + (idx / (series.length - 1)) * (xEnd - xStart);
+        const norm = (bpm - 45) / (170 - 45);
+        const y = yBottom - Math.min(Math.max(norm, 0), 1) * (yBottom - yTop);
+        return { x, y, bpm };
+      });
+
+      const linePath = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+      const areaPath = `${linePath} L${pts[pts.length - 1].x.toFixed(1)},${yBottom} L${pts[0].x.toFixed(1)},${yBottom} Z`;
+
+      document.getElementById("svgHrLine").setAttribute("d", linePath);
+      document.getElementById("svgHrArea").setAttribute("d", areaPath);
+
+      const lastPt = pts[pts.length - 1];
+      setScrubberPoint(lastPt, "11:20 AM · LATEST");
+
+      const svgEl = document.getElementById("svgHrWaveform");
+      svgEl.onclick = (ev) => {
+        const rect = svgEl.getBoundingClientRect();
+        const relX = ((ev.clientX - rect.left) / rect.width) * 320;
+        let closest = pts[0];
+        let minDist = Infinity;
+        pts.forEach((p, idx) => {
+          const d = Math.abs(p.x - relX);
+          if (d < minDist) {
+            minDist = d;
+            closest = { ...p, idx };
+          }
+        });
+        const minsOffset = Math.round((closest.idx / (pts.length - 1)) * 106);
+        const hr = 9 + Math.floor((34 + minsOffset) / 60);
+        const mn = String((34 + minsOffset) % 60).padStart(2, "0");
+        setScrubberPoint(closest, `${hr}:${mn} AM · RECORDED`);
+      };
+
+      const hist = (currentHistory && currentHistory.length ? currentHistory : FALLBACK_PATIENTS[currentPatientId].history).slice(-5);
+      const dayLabels = ["WED", "THU", "FRI", "SAT", "TODAY"];
+      const txStart = 32;
+      const txEnd = 288;
+
+      const rhrPts = hist.map((h, i) => {
+        const val = h.recovery?.restingHeartRate ?? 58;
+        const x = txStart + (i / Math.max(hist.length - 1, 1)) * (txEnd - txStart);
+        const y = 82 - ((val - 45) / 55) * 62;
+        return { x, y, val };
+      });
+
+      const hrvPts = hist.map((h, i) => {
+        const val = h.recovery?.hrvMs ?? 42;
+        const x = txStart + (i / Math.max(hist.length - 1, 1)) * (txEnd - txStart);
+        const y = 82 - ((val - 10) / 60) * 62;
+        return { x, y, val };
+      });
+
+      const rhrLine = rhrPts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+      const hrvLine = hrvPts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+
+      const trendSvg = document.getElementById("svgTrendChart");
+      trendSvg.innerHTML = `
+        <line x1="16" y1="84" x2="304" y2="84" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+        <path d="${rhrLine}" fill="none" stroke="#2b88d8" stroke-width="1.8"/>
+        <path d="${hrvLine}" fill="none" stroke="#26d07c" stroke-width="1.8"/>
+        ${rhrPts.map((p) => `
+          <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.2" fill="#13171c" stroke="#2b88d8" stroke-width="2"/>
+          <text x="${p.x.toFixed(1)}" y="${(p.y - 7).toFixed(1)}" fill="#2b88d8" font-size="9" font-weight="600" text-anchor="middle">${p.val}</text>
+        `).join("")}
+        ${hrvPts.map((p, idx) => `
+          <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.2" fill="#13171c" stroke="#26d07c" stroke-width="2"/>
+          <text x="${p.x.toFixed(1)}" y="${(p.y + 13).toFixed(1)}" fill="#26d07c" font-size="9" font-weight="600" text-anchor="middle">${p.val}</text>
+          <text x="${p.x.toFixed(1)}" y="102" fill="#8a94a0" font-size="8.5" font-weight="600" text-anchor="middle">${dayLabels[idx] || ""}</text>
+        `).join("")}
+      `;
+
+      const rangeListEl = document.getElementById("uiRangeList");
+      rangeListEl.innerHTML = METRICS.map((m) => {
+        const warn = m.isWarn(currentSnapshot);
+        const pct = Math.round(m.pctOfRange(currentSnapshot) * 100);
+        const barColor = warn ? "#e53935" : "#2b88d8";
+        return `
+          <div class="range-item">
+            <div class="range-item-top">
+              <span class="range-item-name">${m.shortLabel} · ${m.title}</span>
+              <span class="range-item-val" style="color: ${warn ? "var(--rec-red)" : "var(--text-white)"};">${m.valueText(currentSnapshot)}</span>
+            </div>
+            <div class="range-track">
+              <div class="range-fill" style="width: ${pct}%; background: ${barColor};"></div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function setScrubberPoint(pt, label) {
+      document.getElementById("svgScrubLine").setAttribute("x1", pt.x.toFixed(1));
+      document.getElementById("svgScrubLine").setAttribute("x2", pt.x.toFixed(1));
+      document.getElementById("svgScrubDot").setAttribute("cx", pt.x.toFixed(1));
+      document.getElementById("svgScrubDot").setAttribute("cy", pt.y.toFixed(1));
+      document.getElementById("uiInspectHrVal").textContent = pt.bpm;
+      document.getElementById("uiInspectHrTime").textContent = `BPM · ${label}`;
+    }
+
+    function renderShareView() {
+      const count = allowedSet.size;
+      const isSharing = count > 0;
+
+      document.getElementById("btnSegYes").className = `seg-choice ${isSharing ? "active-yes" : ""}`;
+      document.getElementById("btnSegNo").className = `seg-choice ${!isSharing ? "active-no" : ""}`;
+      document.getElementById("uiPermCounter").textContent = `${count} of ${METRICS.length} enabled`;
+      document.getElementById("uiDockShareDot").className = `share-dot ${isSharing ? "" : "off"}`;
+
+      const permListEl = document.getElementById("uiPermList");
+      permListEl.innerHTML = METRICS.map((m) => {
+        const on = allowedSet.has(m.key);
+        return `
+          <div class="perm-row" onclick="toggleMetric('${m.key}')" style="cursor: pointer;">
+            <div>
+              <div class="perm-name">${m.title}</div>
+              <div class="perm-meta">${m.desc} · ${m.valueText(currentSnapshot)}</div>
+            </div>
+            <button
+              type="button"
+              class="ios-switch ${on ? "on" : ""}"
+              role="switch"
+              aria-checked="${on}"
+              aria-label="Share ${m.title}"
+            >
+              <span class="ios-switch-knob"></span>
+            </button>
+          </div>
+        `;
+      }).join("");
+
+      const syncBtn = document.getElementById("btnSyncHospital");
+      if (isSharing) {
+        syncBtn.className = "sync-btn";
+        syncBtn.textContent = `SYNC ${count} METRIC${count === 1 ? "" : "S"} WITH HOSPITAL`;
+      } else {
+        syncBtn.className = "sync-btn private-mode";
+        syncBtn.textContent = "SAVE PRIVATE PREFERENCE";
+      }
+    }
+
+    async function saveAndSync() {
+      const prof = PATIENT_PROFILES[currentPatientId];
+      const toastEl = document.getElementById("uiSyncToast");
+
+      if (!prof.signedIn || !prof.ppsn.trim()) {
+        toastEl.className = "sync-toast visible";
+        toastEl.textContent = "Please sign in to your Hospital Centre and enter your mandatory PPSN in Profile first.";
+        setTimeout(() => toggleProfile(true), 600);
+        return;
+      }
+
+      const allowArray = METRICS.map((m) => m.key).filter((k) => allowedSet.has(k));
+      const syncBtn = document.getElementById("btnSyncHospital");
+      const prevText = syncBtn.textContent;
+
+      syncBtn.textContent = "SYNCING...";
+      syncBtn.disabled = true;
+
+      try {
+        const res = await fetch(`${GATEWAY_BASE}/sync/${currentPatientId}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ consent: { allow: allowArray } }),
+        });
+        const data = await res.json();
+
+        toastEl.className = "sync-toast visible";
+        if (allowArray.length === 0) {
+          toastEl.textContent = `Private mode saved · Zero metrics transmitted to ${prof.hospital}.`;
+        } else {
+          const alerts = data?.hospital?.alerts || [];
+          const alertInfo = alerts.length > 0 ? ` · ${alerts.length} cardiology alert(s) flagged` : "";
+          toastEl.textContent = `Synced ${allowArray.length} biometric(s) to ${prof.hospital} (PPSN ${prof.ppsn})${alertInfo}.`;
+        }
+      } catch (_err) {
+        toastEl.className = "sync-toast visible";
+        if (allowArray.length === 0) {
+          toastEl.textContent = `Private mode saved · Zero metrics transmitted to ${prof.hospital}.`;
+        } else {
+          toastEl.textContent = `Synced ${allowArray.length} biometric(s) to ${prof.hospital} (PPSN ${prof.ppsn}).`;
+        }
+      } finally {
+        syncBtn.textContent = prevText;
+        syncBtn.disabled = false;
+      }
+    }
+
+    selectPatient("pt-001");
+  </script>
 </body>
 </html>
