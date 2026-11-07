@@ -22,7 +22,9 @@ npm run install:all
 npm run dev
 ```
 
-Then trigger a sync:
+Open the **admin dashboard** at http://localhost:4002/ — it shows live service health, a visual pipeline that animates during each sync, per-patient run buttons, the latest trace (snapshot / bundle / receipt), and a streaming telemetry log. Everything is driven by the gateway's `/events/stream` SSE endpoint.
+
+Or trigger syncs manually:
 
 ```bash
 # stable patient
