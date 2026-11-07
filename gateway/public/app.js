@@ -41,7 +41,7 @@ function setPipelineStage(stage, statusText) {
   });
 }
 
-setPipelineStage("idle", "idle");
+setPipelineStage("idle", "Idle");
 
 // ── Clock ───────────────────────────────────────────────────
 const clock = $("#clock");
@@ -108,7 +108,7 @@ function renderRoster() {
     li.className = "roster-item";
     li.innerHTML = `
       <div class="roster-row">
-        <span>
+        <span class="r-left">
           <span class="r-id">${p.id}</span>
           <span class="r-name">${p.displayName ?? ""}</span>
         </span>
@@ -119,7 +119,7 @@ function renderRoster() {
       </div>
       <div class="roster-row">
         <span></span>
-        <button class="r-run" data-sync="${p.id}">▸ SYNC</button>
+        <button class="r-run" data-sync="${p.id}">Sync</button>
       </div>
     `;
     list.appendChild(li);
@@ -134,7 +134,7 @@ async function runSync(patientId) {
   if (state.busy) return;
   state.busy = true;
   setAllRunButtons(true);
-  setPipelineStage("whoop", `syncing ${patientId}…`);
+  setPipelineStage("whoop", `Syncing ${patientId}…`);
 
   let r;
   try {
@@ -155,10 +155,10 @@ async function runSync(patientId) {
 
   if (!r.ok) {
     const stage = data?.stage ?? "whoop";
-    setPipelineStage(`error-${stage}`, `failed at ${stage}`);
+    setPipelineStage(`error-${stage}`, `Failed at ${stage}`);
     paintTrace(data, { errorStage: stage });
   } else {
-    setPipelineStage("complete", "complete");
+    setPipelineStage("complete", "Complete");
     paintTrace(data);
   }
 
@@ -265,11 +265,11 @@ function appendLogRow(ev) {
 
   // Drive pipeline stage from events too (lets other clients see the animation).
   if (ev.runId && ev.level === "ok") {
-    if (ev.stage === "whoop") setPipelineStage("translate", "translating…");
-    else if (ev.stage === "translate") setPipelineStage("hospital", "posting bundle…");
+    if (ev.stage === "whoop") setPipelineStage("translate", "Translating…");
+    else if (ev.stage === "translate") setPipelineStage("hospital", "Posting bundle…");
   }
   if (ev.level === "error" && ev.stage) {
-    setPipelineStage(`error-${ev.stage}`, `error at ${ev.stage}`);
+    setPipelineStage(`error-${ev.stage}`, `Error at ${ev.stage}`);
   }
 
   // Keep log bounded in DOM.
@@ -291,7 +291,7 @@ function connectStream() {
   });
   es.onerror = () => {
     // EventSource auto-reconnects. Note it transiently.
-    pipelineStatus.textContent = "stream reconnecting…";
+    pipelineStatus.textContent = "Stream reconnecting…";
   };
 }
 
