@@ -1,0 +1,16 @@
+{
+  "name": "corkathon",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Whoop -> AI gateway -> Hospital FHIR pipeline (hackathon scaffold).",
+  "scripts": {
+    "install:all": "npm --prefix whoop install && npm --prefix gateway install && npm --prefix hospital install",
+    "start:whoop": "npm --prefix whoop start",
+    "start:gateway": "npm --prefix gateway start",
+    "start:hospital": "npm --prefix hospital start",
+    "dev": "concurrently -k -n whoop,gateway,hospital -c blue,magenta,green \"npm run start:whoop\" \"npm run start:gateway\" \"npm run start:hospital\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

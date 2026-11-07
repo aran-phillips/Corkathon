@@ -1,0 +1,20 @@
+{
+  "patient": { "id": "pt-001", "displayName": "Jane Doe" },
+  "takenAt": "2026-11-07T08:00:00Z",
+  "recovery": {
+    "score": 68,
+    "restingHeartRate": 58,
+    "hrvMs": 42,
+    "spo2": 97
+  },
+  "sleep": {
+    "durationMs": 25200000,
+    "efficiency": 0.91,
+    "disturbances": 3
+  },
+  "cycle": {
+    "strain": 12.4,
+    "averageHeartRate": 72,
+    "maxHeartRate": 148
+  }
+}

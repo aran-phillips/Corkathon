@@ -1,0 +1,45 @@
+{
+  "resourceType": "Bundle",
+  "type": "transaction",
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "status": "final",
+        "code": {
+          "coding": [{ "system": "http://loinc.org", "code": "40443-4", "display": "Resting heart rate" }]
+        },
+        "subject": { "reference": "Patient/pt-001" },
+        "effectiveDateTime": "2026-11-07T08:00:00Z",
+        "valueQuantity": { "value": 58, "unit": "/min", "system": "http://unitsofmeasure.org", "code": "/min" }
+      },
+      "request": { "method": "POST", "url": "Observation" }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "status": "final",
+        "code": {
+          "coding": [{ "system": "http://loinc.org", "code": "80404-7", "display": "Heart rate variability SDNN" }]
+        },
+        "subject": { "reference": "Patient/pt-001" },
+        "effectiveDateTime": "2026-11-07T08:00:00Z",
+        "valueQuantity": { "value": 42, "unit": "ms", "system": "http://unitsofmeasure.org", "code": "ms" }
+      },
+      "request": { "method": "POST", "url": "Observation" }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "status": "final",
+        "code": {
+          "coding": [{ "system": "http://loinc.org", "code": "59408-5", "display": "Oxygen saturation" }]
+        },
+        "subject": { "reference": "Patient/pt-001" },
+        "effectiveDateTime": "2026-11-07T08:00:00Z",
+        "valueQuantity": { "value": 97, "unit": "%", "system": "http://unitsofmeasure.org", "code": "%" }
+      },
+      "request": { "method": "POST", "url": "Observation" }
+    }
+  ]
+}
