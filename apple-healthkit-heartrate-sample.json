@@ -1,0 +1,8 @@
+{
+  "type": "HKQuantityTypeIdentifierHeartRate",
+  "value": 72,
+  "unit": "count/min",
+  "startDate": "2026-11-06T10:00:00Z",
+  "endDate": "2026-11-06T10:00:00Z",
+  "sourceName": "Apple Watch"
+}
