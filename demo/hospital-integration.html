@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>WatchLink inside the hospital EHR: integration demo</title>
+<title>HealthConnect inside the hospital EHR: integration demo</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#c3cdd8;font:12px/1.35 "Segoe UI",Tahoma,Arial,sans-serif;color:#1d2733;padding-bottom:60px}
@@ -98,7 +98,7 @@ body.ip .ipm::after{content:attr(data-ip);position:absolute;top:-10px;right:-10p
 .ibm.unread{font-weight:600}
 .ibd{padding:8px 10px;white-space:pre-wrap}
 .stat{display:flex;gap:18px;background:#e6ecf2;border-top:1px solid #b6c2cf;padding:3px 10px;color:#4a5a6c;font-size:11px}
-/* embedded SMART app (WatchLink's own UI) */
+/* embedded SMART app (HealthConnect's own UI) */
 .smart{margin:10px;border:1px solid #9fb3c8}
 .smart-bar{display:flex;gap:10px;background:#f7f9fb;border-bottom:1px solid #cfd8e2;padding:4px 8px;font-size:11px;color:#5b6b7d}
 .smart-bar .sp{flex:1}
@@ -202,11 +202,11 @@ body.ip .legend{display:block}
       <button class="act" data-act="problems">Problem List</button>
       <button class="act" data-act="orders">Orders</button>
       <div class="grp">Apps</div>
-      <button class="act ipm" data-ip="4" data-act="watchlink">WatchLink<span class="tag">SMART</span></button>
+      <button class="act ipm" data-ip="4" data-act="healthconnect">HealthConnect<span class="tag">SMART</span></button>
     </nav>
     <main class="main"><div class="ah"><h2 id="actTitle">Summary</h2><span class="sp"></span><button class="btn" id="refresh">Refresh</button></div><div id="actBody"></div></main>
   </div>
-  <div class="stat"><span>Ready</span><span>Environment: LVUH-PROD</span><span id="statIf">Interface WATCHLINK (FHIR R4): active · no messages today</span><span style="flex:1"></span><span id="clock"></span></div>
+  <div class="stat"><span>Ready</span><span>Environment: LVUH-PROD</span><span id="statIf">Interface HEALTHCONNECT (FHIR R4): active · no messages today</span><span style="flex:1"></span><span id="clock"></span></div>
   <div class="ov" id="ov"><div class="dlg ipm" data-ip="3" id="dlg"></div></div>
 </div>
 
@@ -231,7 +231,7 @@ body.ip .legend{display:block}
   </div>
 </div>
 
-<div class="drawer" id="drawer"><div class="h"><b>API traffic</b><span>All calls between WatchLink and the hospital system. Click a row for the payload.</span><span class="sp"></span><button id="clearLog">Clear</button></div><div id="log"><div class="lempty">No traffic yet.</div></div></div>
+<div class="drawer" id="drawer"><div class="h"><b>API traffic</b><span>All calls between HealthConnect and the hospital system. Click a row for the payload.</span><span class="sp"></span><button id="clearLog">Clear</button></div><div id="log"><div class="lempty">No traffic yet.</div></div></div>
 
 <script>
 /* ---------- helpers ---------- */
@@ -250,7 +250,7 @@ let uuidN = 0;
 function uuid(r){ const h = () => Math.floor(r()*16).toString(16); let s=''; for (let i=0;i<32;i++) s+=h(); uuidN++; return `${s.slice(0,8)}-${s.slice(8,12)}-4${s.slice(13,16)}-a${s.slice(17,20)}-${s.slice(20,32)}`; }
 
 const LOINC = 'http://loinc.org', UCUM = 'http://unitsofmeasure.org';
-const LOCAL = 'https://watchlink.example/fhir/CodeSystem/wearable-metric';
+const LOCAL = 'https://healthconnect.example/fhir/CodeSystem/wearable-metric';
 const PPSN_SYS = 'urn:example:ie:ppsn', PPSN = '1234567TW';
 const IHI_SYS = 'urn:example:ie:ihi', IHI = '123456789012345678';
 const PT_IDS = [{ system: IHI_SYS, value: IHI }, { system: PPSN_SYS, value: PPSN }];
@@ -282,7 +282,7 @@ function story(n, seed){
 function mkObs({system = LOINC, code, display, cat = 'vital-signs', when, period, value, unit, ucum, device, note}){
   const o = {
     resourceType: 'Observation', status: 'final',
-    meta: { tag: [{ system: 'https://watchlink.example/fhir/tags', code: 'patient-generated', display: 'Patient-generated health data' }] },
+    meta: { tag: [{ system: 'https://healthconnect.example/fhir/tags', code: 'patient-generated', display: 'Patient-generated health data' }] },
     category: [{ coding: [{ system: 'http://terminology.hl7.org/CodeSystem/observation-category', code: cat }] }],
     code: { coding: [{ system, code, display }], text: display },
     subject: { reference: 'urn:uuid:patient' },
@@ -482,7 +482,7 @@ function buildBundle(src, obs){
   const entry = [
     { fullUrl: 'urn:uuid:patient', resource: { resourceType: 'Patient', identifier: PT_IDS, name: [{ family: 'Murphy', given: ['Jane'] }], gender: 'female', birthDate: '1968-03-14' },
       request: { method: 'POST', url: 'Patient', ifNoneExist: `identifier=${IHI_SYS}|${IHI}` } },
-    { fullUrl: 'urn:uuid:device', resource: { resourceType: 'Device', manufacturer: src.deviceRes.manufacturer, deviceName: [{ name: src.deviceRes.model, type: 'model-name' }], type: { text: 'Consumer wearable' }, note: [{ text: 'Consumer device, data relayed by WatchLink. Not clinically validated.' }] },
+    { fullUrl: 'urn:uuid:device', resource: { resourceType: 'Device', manufacturer: src.deviceRes.manufacturer, deviceName: [{ name: src.deviceRes.model, type: 'model-name' }], type: { text: 'Consumer wearable' }, note: [{ text: 'Consumer device, data relayed by HealthConnect. Not clinically validated.' }] },
       request: { method: 'POST', url: 'Device' } },
     ...obs.map((o, i) => ({ fullUrl: 'urn:uuid:obs-' + (i + 1), resource: o, request: { method: 'POST', url: 'Observation' } }))
   ];
@@ -661,22 +661,22 @@ async function share(){
   const btn = $('#shareBtn'), st = $('#shareSt'); btn.disabled = true; st.style.color = ''; st.textContent = 'Patient pressed “Send to my care team”…';
   const src = SOURCES[state.src];
   const eps = src.gen(state.days), conv = src.convert(eps), bundle = buildBundle(src, conv.obs);
-  for (const ep of eps) await fake(`WatchLink → ${src.name}`, ep.method, ep.method === 'QUERY' ? ep.host + ' · ' + ep.path : 'https://' + ep.host + ep.path, 200, null, ep.json, 150 + Math.floor(Math.random() * 200));
+  for (const ep of eps) await fake(`HealthConnect → ${src.name}`, ep.method, ep.method === 'QUERY' ? ep.host + ' · ' + ep.path : 'https://' + ep.host + ep.path, 200, null, ep.json, 150 + Math.floor(Math.random() * 200));
   // 1. data in as Observations
-  const r = await api('WatchLink → LVUH FHIR', 'POST', '', bundle);
+  const r = await api('HealthConnect → LVUH FHIR', 'POST', '', bundle);
   if (!r.ok){ st.style.color = '#c0362c'; st.textContent = 'Hospital rejected the bundle.'; btn.disabled = false; return; }
   // 2. tell the clinician: Communication
   const flags = alertsFor(conv.obs);
-  const txt = `WatchLink received ${state.days} days of data from ${src.device} for MURPHY, Jane (IHI ${IHI}).\n\n` +
+  const txt = `HealthConnect received ${state.days} days of data from ${src.device} for MURPHY, Jane (IHI ${IHI}).\n\n` +
     (flags.length ? `Flags:\n${flags.map(f => '• ' + f.text).join('\n')}\n\n` : 'No flags.\n\n') +
-    `${conv.obs.length} readings have been filed to the chart (Flowsheets › Patient-Generated Data – Wearable).\nOpen the WatchLink app in the chart for trends.\n\nPatient-generated data from a consumer device. Not clinically validated.`;
+    `${conv.obs.length} readings have been filed to the chart (Flowsheets › Patient-Generated Data – Wearable).\nOpen the HealthConnect app in the chart for trends.\n\nPatient-generated data from a consumer device. Not clinically validated.`;
   const comm = { resourceType: 'Communication', status: 'completed', category: [{ text: 'Patient-generated data' }], priority: flags.some(f => f.level === 'danger') ? 'urgent' : 'routine',
-    subject: { reference: 'Patient/' + PID, display: 'Murphy, Jane' }, sent: new Date().toISOString(), sender: { display: 'WatchLink' }, recipient: [{ display: 'Byrne, Aoife' }],
+    subject: { reference: 'Patient/' + PID, display: 'Murphy, Jane' }, sent: new Date().toISOString(), sender: { display: 'HealthConnect' }, recipient: [{ display: 'Byrne, Aoife' }],
     payload: [{ contentString: txt }], note: [{ text: `${flags.length} flag(s)` }] };
-  await api('WatchLink → LVUH FHIR', 'POST', '/Communication', comm);
+  await api('HealthConnect → LVUH FHIR', 'POST', '/Communication', comm);
   await fake('LVUH interface engine', 'ROUTE', 'Communication → In Basket pool “Cardiology OPD – Patient Data” (recipient: Byrne, Aoife)', 200, null, null, 250);
   state.lastMsgAt = new Date();
-  $('#statIf').textContent = `Interface WATCHLINK (FHIR R4): active · last message ${fmtTime(state.lastMsgAt)}`;
+  $('#statIf').textContent = `Interface HEALTHCONNECT (FHIR R4): active · last message ${fmtTime(state.lastMsgAt)}`;
   await refreshInbox(false);
   $('#ntoast').classList.add('show');
   st.textContent = `✓ Sent: ${conv.obs.length} readings filed, 1 In Basket message.`; btn.disabled = false;
@@ -708,10 +708,10 @@ async function patientView(){
   if (!state.obs.length || state.cdsSeen === state.ver) return;
   const alerts = computeAlerts().filter(a => !state.ack.has(a.id));
   const req = { hook: 'patient-view', hookInstance: uuid(Math.random), fhirServer: BASE_MOCK, context: { userId: 'Practitioner/byrne-a', patientId: PID },
-    fhirAuthorization: { token_type: 'Bearer', scope: 'patient/Observation.read', subject: 'watchlink-cds', access_token: '••••' } };
-  const cards = alerts.filter(a => a.level !== 'info').map(a => ({ uuid: a.id, summary: a.text, detail: a.sub, indicator: a.level === 'danger' ? 'critical' : 'warning', source: { label: 'WatchLink (patient-generated wearable data)' },
-    links: [{ label: 'Open WatchLink', type: 'smart', url: 'https://app.watchlink.example/launch' }] }));
-  await fake('LVUH EHR → WatchLink CDS', 'POST', 'https://cds.watchlink.example/cds-services/wearable-flags  (hook: patient-view)', 200, req, { cards }, 260);
+    fhirAuthorization: { token_type: 'Bearer', scope: 'patient/Observation.read', subject: 'healthconnect-cds', access_token: '••••' } };
+  const cards = alerts.filter(a => a.level !== 'info').map(a => ({ uuid: a.id, summary: a.text, detail: a.sub, indicator: a.level === 'danger' ? 'critical' : 'warning', source: { label: 'HealthConnect (patient-generated wearable data)' },
+    links: [{ label: 'Open HealthConnect', type: 'smart', url: 'https://app.healthconnect.example/launch' }] }));
+  await fake('LVUH EHR → HealthConnect CDS', 'POST', 'https://cds.healthconnect.example/cds-services/wearable-flags  (hook: patient-view)', 200, req, { cards }, 260);
   state.cdsSeen = state.ver;
   if (!cards.length) return;
   $('#dlg').innerHTML = `<div class="t">Clinical Advisory: Murphy, Jane<span class="sp"></span>CDS</div>
@@ -719,14 +719,14 @@ async function patientView(){
     ${cards.map(c => `<div class="card ${c.indicator}"><b>${esc(c.summary)}</b><span class="muted">${esc(c.detail)}</span></div>`).join('')}
     <div class="muted" style="margin-top:6px">Source: ${esc(cards[0].source.label)}. Not clinically validated.</div></div>
     <div class="ft"><span>Acknowledge reason:</span><select id="ackWhy"><option>Will review at next visit</option><option>Contacted patient</option><option>Already aware</option><option>Not clinically relevant</option></select>
-    <span class="sp"></span><button class="btn pri" id="cdsOpen">Open WatchLink</button><button class="btn" id="cdsAck">Acknowledge</button></div>`;
+    <span class="sp"></span><button class="btn pri" id="cdsOpen">Open HealthConnect</button><button class="btn" id="cdsAck">Acknowledge</button></div>`;
   $('#ov').classList.add('show');
   $('#cdsAck').onclick = async () => { const why = $('#ackWhy').value; cards.forEach(c => state.ack.add(c.uuid)); $('#ov').classList.remove('show');
-    await fake('LVUH EHR → WatchLink CDS', 'POST', 'https://cds.watchlink.example/cds-services/wearable-flags/feedback', 200, { feedback: cards.map(c => ({ card: c.uuid, outcome: 'overridden', overrideReason: { reason: { display: why } }, outcomeTimestamp: new Date().toISOString() })) }, null, 150);
+    await fake('LVUH EHR → HealthConnect CDS', 'POST', 'https://cds.healthconnect.example/cds-services/wearable-flags/feedback', 200, { feedback: cards.map(c => ({ card: c.uuid, outcome: 'overridden', overrideReason: { reason: { display: why } }, outcomeTimestamp: new Date().toISOString() })) }, null, 150);
     render(); };
   $('#cdsOpen').onclick = async () => { $('#ov').classList.remove('show');
-    await fake('LVUH EHR → WatchLink CDS', 'POST', 'https://cds.watchlink.example/cds-services/wearable-flags/feedback', 200, { feedback: cards.map(c => ({ card: c.uuid, outcome: 'accepted', acceptedSuggestions: [], outcomeTimestamp: new Date().toISOString() })) }, null, 150);
-    setAct('watchlink'); };
+    await fake('LVUH EHR → HealthConnect CDS', 'POST', 'https://cds.healthconnect.example/cds-services/wearable-flags/feedback', 200, { feedback: cards.map(c => ({ card: c.uuid, outcome: 'accepted', acceptedSuggestions: [], outcomeTimestamp: new Date().toISOString() })) }, null, 150);
+    setAct('healthconnect'); };
 }
 async function openChart(){
   $('#ib').classList.remove('show');
@@ -734,12 +734,12 @@ async function openChart(){
 }
 
 /* ---- activities ---- */
-const TITLES = { summary: 'Summary', results: 'Results Review', flow: 'Flowsheets', notes: 'Notes', meds: 'Medications', problems: 'Problem List', orders: 'Orders', watchlink: 'WatchLink' };
-function setAct(a){ state.act = a; $$('#side .act').forEach(b => b.classList.toggle('on', b.dataset.act === a)); render(); if (a === 'watchlink') smartLaunch(); }
+const TITLES = { summary: 'Summary', results: 'Results Review', flow: 'Flowsheets', notes: 'Notes', meds: 'Medications', problems: 'Problem List', orders: 'Orders', healthconnect: 'HealthConnect' };
+function setAct(a){ state.act = a; $$('#side .act').forEach(b => b.classList.toggle('on', b.dataset.act === a)); render(); if (a === 'healthconnect') smartLaunch(); }
 
 function render(){
   $('#actTitle').textContent = TITLES[state.act];
-  const f = { summary: vSummary, results: vResults, flow: vFlow, notes: vNotes, meds: vMeds, problems: vProblems, orders: vOrders, watchlink: vSmart }[state.act];
+  const f = { summary: vSummary, results: vResults, flow: vFlow, notes: vNotes, meds: vMeds, problems: vProblems, orders: vOrders, healthconnect: vSmart }[state.act];
   $('#actBody').innerHTML = f();
 }
 const allNotes = () => [...state.notes, { id: 'n2', date: '2026-10-12T10:40:00Z', type: 'Outpatient Clinic Letter', author: 'Byrne, Aoife', text: 'Reviewed in cardiology OPD. Paroxysmal AF, rate controlled on bisoprolol. Anticoagulated with apixaban. Asymptomatic. BP 138/84. Plan: continue current therapy, review in 6 weeks. Patient interested in sharing smartwatch data.' },
@@ -797,7 +797,7 @@ function vFlow(){
   if (state.selCell){
     const [code, d] = state.selCell.split('|');
     const o = state.obs.filter(x => codeOf(x) === code && ymd(whenOf(x)) === d).pop();
-    if (o) info = `<b>${esc(o.code.coding[0].display)}</b> · ${o.valueQuantity ? esc(o.valueQuantity.value + ' ' + o.valueQuantity.unit) : esc(o.valueCodeableConcept?.text || '')} · taken ${fmtDT(whenOf(o))} · source ${esc(o.device?.display || '')} (patient-generated) · filed ${fmtDT(o.meta.lastUpdated)} by interface WATCHLINK · <span class="muted">Observation/${esc(o.id)} · ${o.code.coding[0].system === LOINC ? 'LOINC' : 'local'} ${esc(code)}</span>`;
+    if (o) info = `<b>${esc(o.code.coding[0].display)}</b> · ${o.valueQuantity ? esc(o.valueQuantity.value + ' ' + o.valueQuantity.unit) : esc(o.valueCodeableConcept?.text || '')} · taken ${fmtDT(whenOf(o))} · source ${esc(o.device?.display || '')} (patient-generated) · filed ${fmtDT(o.meta.lastUpdated)} by interface HEALTHCONNECT · <span class="muted">Observation/${esc(o.id)} · ${o.code.coding[0].system === LOINC ? 'LOINC' : 'local'} ${esc(code)}</span>`;
   }
   return `<div class="ac"><div class="fsw"><div class="fsl"><div class="pn"><h3>Flowsheet</h3><div class="b">
       <div class="it">Vital Signs</div><div class="it on">OPD Cardiology</div><div class="it">Diabetes Review</div><div class="it">Fluid Balance</div></div></div>
@@ -814,18 +814,18 @@ async function smartLaunch(){
   if (state.launched) return;
   state.launched = 'pending'; render();
   const launch = 'xK2' + Math.random().toString(36).slice(2, 8);
-  await fake('LVUH EHR → WatchLink app', 'LAUNCH', `https://app.watchlink.example/launch?iss=${encodeURIComponent(BASE_MOCK)}&launch=${launch}`, 302, null, null, 200);
-  await fake('WatchLink app → LVUH auth', 'GET', `https://auth.lvuh.example/oauth2/authorize?response_type=code&client_id=watchlink&scope=launch%20openid%20fhirUser%20patient%2FObservation.read%20patient%2FDocumentReference.write&launch=${launch}&aud=${encodeURIComponent(BASE_MOCK)}`, 302, null, null, 180);
-  await fake('WatchLink app → LVUH auth', 'POST', 'https://auth.lvuh.example/oauth2/token', 200, { grant_type: 'authorization_code', code: '••••', redirect_uri: 'https://app.watchlink.example/callback' },
+  await fake('LVUH EHR → HealthConnect app', 'LAUNCH', `https://app.healthconnect.example/launch?iss=${encodeURIComponent(BASE_MOCK)}&launch=${launch}`, 302, null, null, 200);
+  await fake('HealthConnect app → LVUH auth', 'GET', `https://auth.lvuh.example/oauth2/authorize?response_type=code&client_id=healthconnect&scope=launch%20openid%20fhirUser%20patient%2FObservation.read%20patient%2FDocumentReference.write&launch=${launch}&aud=${encodeURIComponent(BASE_MOCK)}`, 302, null, null, 180);
+  await fake('HealthConnect app → LVUH auth', 'POST', 'https://auth.lvuh.example/oauth2/token', 200, { grant_type: 'authorization_code', code: '••••', redirect_uri: 'https://app.healthconnect.example/callback' },
     { access_token: '••••', token_type: 'Bearer', expires_in: 3600, scope: 'launch openid fhirUser patient/Observation.read patient/DocumentReference.write', patient: PID, encounter: 'enc-88231', need_patient_banner: false }, 220);
-  await loadObs('WatchLink app → LVUH FHIR');
-  state.launched = true; if (state.act === 'watchlink') render();
+  await loadObs('HealthConnect app → LVUH FHIR');
+  state.launched = true; if (state.act === 'healthconnect') render();
 }
 function vSmart(){
-  const bar = `<div class="smart-bar"><span>Embedded app: WatchLink · SMART on FHIR</span><span>Patient context: Patient/${PID}</span><span class="sp"></span><span>${state.launched === true ? 'Authorised (EHR single sign-on)' : 'Launching…'}</span></div>`;
+  const bar = `<div class="smart-bar"><span>Embedded app: HealthConnect · SMART on FHIR</span><span>Patient context: Patient/${PID}</span><span class="sp"></span><span>${state.launched === true ? 'Authorised (EHR single sign-on)' : 'Launching…'}</span></div>`;
   if (state.launched !== true) return `<div class="smart">${bar}<div class="app"><div class="empty">Connecting to LVUH with your EHR login…</div></div></div>`;
   const alerts = computeAlerts(), devices = [...new Set(state.obs.map(o => o.device?.display).filter(Boolean))];
-  let h = `<div class="apph"><div class="logo">W</div><div><b>WatchLink for clinicians</b><span>Murphy, Jane · ${state.obs.length} readings · ${esc(devices.join(', ') || 'no device data')}</span></div><span class="sp"></span>
+  let h = `<div class="apph"><div class="logo">W</div><div><b>HealthConnect for clinicians</b><span>Murphy, Jane · ${state.obs.length} readings · ${esc(devices.join(', ') || 'no device data')}</span></div><span class="sp"></span>
     ${state.obs.length ? '<button class="abtn sec" id="fileNote">File summary to Notes</button>' : ''}</div>`;
   if (!state.obs.length) return `<div class="smart">${bar}<div class="app">${h}<div class="empty">This patient hasn't shared any wearable data yet.</div></div></div>`;
   h += `<div class="disc">Patient-generated data from a consumer device. Not clinically validated. Use as context, not for diagnosis. The shaded band is the expected range.</div>`;
@@ -851,18 +851,18 @@ function vSmart(){
 async function fileNote(){
   const alerts = computeAlerts(), f = (code, dp) => { const s = dailySeries(code); if (!s.length) return null; const l = s[s.length - 1].v; return dp ? l.toFixed(1) : Math.round(l); };
   const lines = [['Resting HR', f('40443-4'), 'bpm'], ['HRV (RMSSD)', f('hrv-rmssd'), 'ms'], ['HRV (SDNN)', f('80404-7'), 'ms'], ['SpO2 overnight', f('59408-5', 1), '%'], ['Sleep', f('93832-4', 1), 'h']].filter(x => x[1] != null);
-  const text = `WEARABLE DATA SUMMARY (patient-generated, not clinically validated)\nSource: ${[...new Set(state.obs.map(o => o.device?.display))].join(', ')} via WatchLink\n\nLatest values:\n${lines.map(l => `  ${l[0]}: ${l[1]} ${l[2]}`).join('\n')}\n\nFlags:\n${alerts.map(a => '  • ' + a.text + (state.ack.has(a.id) ? ' (acknowledged)' : '')).join('\n') || '  None'}\n\nFiled by WatchLink at the request of Byrne, Aoife.`;
+  const text = `WEARABLE DATA SUMMARY (patient-generated, not clinically validated)\nSource: ${[...new Set(state.obs.map(o => o.device?.display))].join(', ')} via HealthConnect\n\nLatest values:\n${lines.map(l => `  ${l[0]}: ${l[1]} ${l[2]}`).join('\n')}\n\nFlags:\n${alerts.map(a => '  • ' + a.text + (state.ack.has(a.id) ? ' (acknowledged)' : '')).join('\n') || '  None'}\n\nFiled by HealthConnect at the request of Byrne, Aoife.`;
   const doc = { resourceType: 'DocumentReference', status: 'current', docStatus: 'preliminary', type: { coding: [{ system: LOINC, code: '11506-3', display: 'Progress note' }], text: 'Wearable Data Summary' },
-    subject: { reference: 'Patient/' + PID }, date: new Date().toISOString(), author: [{ display: 'WatchLink (for Byrne, Aoife)' }],
+    subject: { reference: 'Patient/' + PID }, date: new Date().toISOString(), author: [{ display: 'HealthConnect (for Byrne, Aoife)' }],
     content: [{ attachment: { contentType: 'text/plain', data: btoa(unescape(encodeURIComponent(text))) } }] };
-  const r = await api('WatchLink app → LVUH FHIR', 'POST', '/DocumentReference', doc);
-  if (r.ok){ state.notes.unshift({ id: r.body.id, date: r.body.date, type: 'Wearable Data Summary', author: 'WatchLink (for Byrne, Aoife)', text, filed: true }); state.selNote = r.body.id;
+  const r = await api('HealthConnect app → LVUH FHIR', 'POST', '/DocumentReference', doc);
+  if (r.ok){ state.notes.unshift({ id: r.body.id, date: r.body.date, type: 'Wearable Data Summary', author: 'HealthConnect (for Byrne, Aoife)', text, filed: true }); state.selNote = r.body.id;
     const b = $('#fileNote'); if (b){ b.textContent = '✓ Filed to Notes'; b.disabled = true; } }
 }
 
 /* ---- wiring ---- */
 $('#side').onclick = e => { const b = e.target.closest('.act'); if (b) setAct(b.dataset.act); };
-$('#refresh').onclick = async () => { await loadObs(state.act === 'watchlink' ? 'WatchLink app → LVUH FHIR' : 'LVUH EHR'); render(); if (state.act !== 'watchlink') patientView(); };
+$('#refresh').onclick = async () => { await loadObs(state.act === 'healthconnect' ? 'HealthConnect app → LVUH FHIR' : 'LVUH EHR'); render(); if (state.act !== 'healthconnect') patientView(); };
 $('#ibBtn').onclick = () => { $('#ntoast').classList.remove('show'); $('#ib').classList.toggle('show'); refreshInbox(); };
 $('#ntoast').onclick = $('#ibBtn').onclick;
 $('#ibClose').onclick = () => $('#ib').classList.remove('show');
@@ -885,7 +885,7 @@ $('#dcMin').onclick = () => { $('#dc').classList.toggle('min'); document.body.cl
 $('#clearLog').onclick = () => { nLog = 0; $('#log').innerHTML = '<div class="lempty">No traffic yet.</div>'; };
 $('#resetBtn').onclick = () => { mock.reset(); Object.assign(state, { obs: [], msgs: [], selMsg: null, notes: [], cdsSeen: -1, ver: 0, launched: false, selCell: null, selNote: null }); state.ack.clear();
   $('#ibBtn').classList.remove('has'); $('#ntoast').classList.remove('show'); $('#ib').classList.remove('show'); $('#shareSt').textContent = '';
-  $('#statIf').textContent = 'Interface WATCHLINK (FHIR R4): active · no messages today'; setAct('summary'); };
+  $('#statIf').textContent = 'Interface HEALTHCONNECT (FHIR R4): active · no messages today'; setAct('summary'); };
 setInterval(() => $('#clock').textContent = new Date().toLocaleString('en-IE', { dateStyle: 'short', timeStyle: 'short' }), 1000);
 render();
 </script>
