@@ -157,6 +157,65 @@ button{font:inherit;cursor:pointer;color:inherit;background:none;border:0}
 .tab.on::after{content:"";position:absolute;bottom:0;width:4px;height:4px;border-radius:50%;background:var(--accent);margin-top:0}
 .tab-dot{position:absolute}
 
+/* ── Views (tab switching) ── */
+.view{display:none}
+body[data-view="overview"] .view[data-v="overview"],
+body[data-view="cardio"] .view[data-v="cardio"],
+body[data-view="share"] .view[data-v="share"]{display:block}
+
+/* Overview tab */
+.ov-hero{background:linear-gradient(135deg,#1e2430 0%,#141821 100%);border-radius:20px;padding:22px;margin-bottom:14px;position:relative;overflow:hidden}
+.ov-hero::before{content:"";position:absolute;top:-30px;right:-30px;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,rgba(90,169,230,.2) 0%,transparent 70%)}
+.ov-greet{font-size:13px;color:var(--ink2);margin-bottom:4px;position:relative}
+.ov-name{font-size:24px;font-weight:700;letter-spacing:-0.02em;margin-bottom:14px;position:relative}
+.ov-score{display:flex;align-items:baseline;gap:8px;position:relative}
+.ov-score-val{font-size:48px;font-weight:700;letter-spacing:-0.03em;line-height:1}
+.ov-score-lbl{font-size:13px;color:var(--ink2)}
+.ov-score-sub{font-size:12.5px;color:var(--ink3);margin-top:6px;position:relative}
+
+.ov-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.ov-stat{background:var(--card);border-radius:14px;padding:14px 16px}
+.ov-stat .l{font-size:11.5px;color:var(--ink3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+.ov-stat .v{font-size:22px;font-weight:700;letter-spacing:-0.01em;margin-bottom:2px}
+.ov-stat .u{font-size:12px;color:var(--ink3)}
+
+.ov-list{background:var(--card);border-radius:14px;padding:4px 0;margin-bottom:14px}
+.ov-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.ov-row:last-child{border-bottom:none}
+.ov-row .ic{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;flex:none;font-size:14px}
+.ov-row .ic.pink{background:linear-gradient(135deg,#ff5f57 0%,#d63341 100%)}
+.ov-row .ic.blue{background:linear-gradient(135deg,#5aa9e6 0%,#3a7cb0 100%)}
+.ov-row .ic.purple{background:linear-gradient(135deg,#bf5af2 0%,#9540c7 100%)}
+.ov-row .ic.teal{background:linear-gradient(135deg,#64d2ff 0%,#2a9fb5 100%)}
+.ov-row .info{flex:1}
+.ov-row .n{font-size:14.5px;font-weight:600;margin-bottom:1px}
+.ov-row .s{font-size:12px;color:var(--ink3)}
+.ov-row .v{font-size:15px;font-weight:600;color:var(--ink)}
+
+/* Cardio tab */
+.cv-head{text-align:center;margin-bottom:18px}
+.cv-head .lbl{font-size:12px;color:var(--ink3);text-transform:uppercase;letter-spacing:.1em;font-weight:600;margin-bottom:4px}
+.cv-head .big{font-size:56px;font-weight:700;letter-spacing:-0.03em;line-height:1;color:var(--red);text-shadow:0 0 30px rgba(255,95,87,.3)}
+.cv-head .unit{font-size:16px;color:var(--ink2);margin-left:4px;font-weight:500}
+.cv-head .sub{font-size:12.5px;color:var(--ink3);margin-top:4px}
+
+.cv-card{background:var(--card);border-radius:14px;padding:16px;margin-bottom:12px}
+.cv-card-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.cv-card-t{font-size:14.5px;font-weight:600}
+.cv-card-v{font-size:16px;font-weight:600;font-variant-numeric:tabular-nums}
+.cv-card-v .u{font-size:11px;color:var(--ink3);margin-left:2px}
+.cv-sub{font-size:12px;color:var(--ink3);margin-bottom:10px}
+
+.spark{width:100%;height:60px;display:block}
+.spark .line{fill:none;stroke-width:2}
+.spark .area{fill-opacity:.15}
+.spark circle{stroke:var(--phone-bg);stroke-width:2}
+
+.cv-range{display:flex;justify-content:space-between;font-size:11px;color:var(--ink3);margin-top:6px;font-variant-numeric:tabular-nums}
+
+/* Ensure tabs are actually clickable */
+.tab{background:none;border:0;padding:4px 0;cursor:pointer;position:relative}
+
 /* journey drawer */
 .scrim{position:fixed;inset:0;background:rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:opacity .25s;z-index:5}
 .scrim.show{opacity:1;pointer-events:auto}
@@ -219,7 +278,7 @@ button{font:inherit;cursor:pointer;color:inherit;background:none;border:0}
 .j-footer .fbtn.primary:hover{background:#4a98d6}
 </style>
 </head>
-<body>
+<body data-view="share">
 
 <div class="page-note">
   WatchLink · Cork University Hospital · patient consent app<br>
@@ -259,6 +318,96 @@ button{font:inherit;cursor:pointer;color:inherit;background:none;border:0}
       <button class="profile-btn">PROFILE</button>
     </div>
 
+    <!-- ── Overview tab ── -->
+    <div class="view" data-v="overview">
+      <div class="ov-hero">
+        <div class="ov-greet">Good morning, Jane.</div>
+        <div class="ov-name">You're recovered.</div>
+        <div class="ov-score">
+          <span class="ov-score-val" id="ovScore">—</span>
+          <span class="ov-score-lbl">/100 recovery</span>
+        </div>
+        <div class="ov-score-sub" id="ovSub">Updated moments ago</div>
+      </div>
+
+      <div class="ov-stats">
+        <div class="ov-stat">
+          <div class="l">Strain</div>
+          <div class="v" id="ovStrain">—</div>
+          <div class="u">today · 0–21 scale</div>
+        </div>
+        <div class="ov-stat">
+          <div class="l">Sleep</div>
+          <div class="v" id="ovSleep">—</div>
+          <div class="u">last night</div>
+        </div>
+      </div>
+
+      <div class="ov-list">
+        <div class="ov-row">
+          <div class="ic pink">♥</div>
+          <div class="info"><div class="n">Resting heart rate</div><div class="s">Baseline cardiac rhythm</div></div>
+          <div class="v"><span id="ovRhr">—</span> bpm</div>
+        </div>
+        <div class="ov-row">
+          <div class="ic blue">⌇</div>
+          <div class="info"><div class="n">Heart rate variability</div><div class="s">Nervous system balance</div></div>
+          <div class="v"><span id="ovHrv">—</span> ms</div>
+        </div>
+        <div class="ov-row">
+          <div class="ic teal">O₂</div>
+          <div class="info"><div class="n">Blood oxygen</div><div class="s">Overnight average</div></div>
+          <div class="v"><span id="ovSpo2">—</span> %</div>
+        </div>
+        <div class="ov-row">
+          <div class="ic purple">☾</div>
+          <div class="info"><div class="n">Sleep efficiency</div><div class="s">Time asleep vs. time in bed</div></div>
+          <div class="v"><span id="ovSleepEff">—</span> %</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Cardio & Vitals tab ── -->
+    <div class="view" data-v="cardio">
+      <div class="cv-head">
+        <div class="lbl">Resting heart rate</div>
+        <div class="big"><span id="cvHr">—</span><span class="unit">bpm</span></div>
+        <div class="sub" id="cvHrSub">Last reading · today</div>
+      </div>
+
+      <div class="cv-card">
+        <div class="cv-card-h">
+          <span class="cv-card-t">Resting HR trend</span>
+          <span class="cv-card-v"><span id="cvHrAvg">—</span><span class="u">bpm avg</span></span>
+        </div>
+        <div class="cv-sub">Last 5 days</div>
+        <svg class="spark" viewBox="0 0 300 60" preserveAspectRatio="none" id="sparkHr"></svg>
+        <div class="cv-range" id="rangeHr"></div>
+      </div>
+
+      <div class="cv-card">
+        <div class="cv-card-h">
+          <span class="cv-card-t">HRV (SDNN)</span>
+          <span class="cv-card-v"><span id="cvHrvAvg">—</span><span class="u">ms avg</span></span>
+        </div>
+        <div class="cv-sub">Higher = better nervous-system recovery</div>
+        <svg class="spark" viewBox="0 0 300 60" preserveAspectRatio="none" id="sparkHrv"></svg>
+        <div class="cv-range" id="rangeHrv"></div>
+      </div>
+
+      <div class="cv-card">
+        <div class="cv-card-h">
+          <span class="cv-card-t">Blood oxygen (SpO₂)</span>
+          <span class="cv-card-v"><span id="cvSpo2Avg">—</span><span class="u">% avg</span></span>
+        </div>
+        <div class="cv-sub">Overnight saturation</div>
+        <svg class="spark" viewBox="0 0 300 60" preserveAspectRatio="none" id="sparkSpo2"></svg>
+        <div class="cv-range" id="rangeSpo2"></div>
+      </div>
+    </div>
+
+    <!-- ── Hospital Share tab (original screen) ── -->
+    <div class="view" data-v="share">
     <div class="share">
       <h3>Share your cardiology &amp; biometric data with your physician?</h3>
       <p>Allow your care team to receive your daily resting heart rate, HRV, blood oxygen, and sleep recovery metrics. You can change this anytime.</p>
@@ -285,17 +434,18 @@ button{font:inherit;cursor:pointer;color:inherit;background:none;border:0}
       <button class="sync-btn active" id="syncBtn">SYNC <span id="syncCount">5</span> METRICS WITH HOSPITAL</button>
       <div class="sync-status" id="syncStatus"></div>
     </div>
+    </div><!-- /share view -->
 
     <div class="tabs">
-      <button class="tab">
+      <button class="tab" data-tab="overview">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg>
         Overview
       </button>
-      <button class="tab">
+      <button class="tab" data-tab="cardio">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12h4l2-6 4 12 2-6h6"/></svg>
         Cardio &amp; Vitals
       </button>
-      <button class="tab on" style="position:relative">
+      <button class="tab on" data-tab="share">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l9 4v6c0 5-4 9-9 10-5-1-9-5-9-10V6l9-4z"/></svg>
         Hospital Share
       </button>
@@ -374,6 +524,99 @@ async function boot(){
   }
   renderMetrics();
   updateCounts();
+  renderOverview();
+  loadHistoryAndRenderCardio();
+}
+
+// ── Tab navigation ──
+$$('.tab').forEach(t => {
+  t.onclick = () => {
+    const tab = t.dataset.tab;
+    if (!tab) return;
+    document.body.dataset.view = tab;
+    $$('.tab').forEach(x => x.classList.toggle('on', x === t));
+    // Scroll back to top of screen when switching.
+    document.querySelector('.phone').scrollTop = 0;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+});
+
+// ── Overview tab ──
+function renderOverview(){
+  const s = state.snapshot;
+  if (!s) return;
+  const r = s.recovery || {};
+  const sl = s.sleep || {};
+  const c = s.cycle || {};
+  $('#ovScore').textContent = r.score ?? '—';
+  $('#ovStrain').textContent = c.strain != null ? c.strain.toFixed(1) : '—';
+  $('#ovSleep').textContent = sl.durationMs != null ? (sl.durationMs / 3_600_000).toFixed(1) + ' hrs' : '—';
+  $('#ovRhr').textContent = r.restingHeartRate ?? '—';
+  $('#ovHrv').textContent = r.hrvMs ?? '—';
+  $('#ovSpo2').textContent = r.spo2 ?? '—';
+  $('#ovSleepEff').textContent = sl.efficiency != null ? Math.round(sl.efficiency * 100) : '—';
+  if (s.takenAt){
+    const d = new Date(s.takenAt);
+    $('#ovSub').textContent = `Updated ${d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
+  }
+}
+
+// ── Cardio & Vitals tab ──
+async function loadHistoryAndRenderCardio(){
+  try{
+    const r = await fetch(`/whoop/history/${encodeURIComponent(PATIENT_ID)}`);
+    if (!r.ok) return;
+    state.history = await r.json();
+    renderCardio();
+  }catch{}
+}
+
+function renderCardio(){
+  const s = state.snapshot;
+  const h = state.history || [];
+  if (!s) return;
+  const r = s.recovery || {};
+  $('#cvHr').textContent = r.restingHeartRate ?? '—';
+  if (s.takenAt){
+    const d = new Date(s.takenAt);
+    $('#cvHrSub').textContent = `Last reading · ${d.toLocaleString('en-GB', { dateStyle: 'short', timeStyle: 'short' })}`;
+  }
+
+  const hr   = h.map(x => x.recovery?.restingHeartRate).filter(v => v != null);
+  const hrv  = h.map(x => x.recovery?.hrvMs).filter(v => v != null);
+  const spo2 = h.map(x => x.recovery?.spo2).filter(v => v != null);
+  const dates = h.map(x => new Date(x.takenAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }));
+
+  drawSpark('#sparkHr',   hr,   '#ff5f57');
+  drawSpark('#sparkHrv',  hrv,  '#5aa9e6');
+  drawSpark('#sparkSpo2', spo2, '#64d2ff');
+
+  $('#cvHrAvg').textContent   = hr.length   ? Math.round(avg(hr)) : '—';
+  $('#cvHrvAvg').textContent  = hrv.length  ? Math.round(avg(hrv)) : '—';
+  $('#cvSpo2Avg').textContent = spo2.length ? Math.round(avg(spo2)) : '—';
+
+  $('#rangeHr').innerHTML   = dates.map(d => `<span>${d}</span>`).join('');
+  $('#rangeHrv').innerHTML  = dates.map(d => `<span>${d}</span>`).join('');
+  $('#rangeSpo2').innerHTML = dates.map(d => `<span>${d}</span>`).join('');
+}
+
+function avg(xs){ return xs.reduce((a, b) => a + b, 0) / xs.length; }
+
+function drawSpark(sel, values, color){
+  const svg = document.querySelector(sel);
+  if (!svg || values.length === 0) return;
+  const W = 300, H = 60, pad = 4;
+  const mn = Math.min(...values), mx = Math.max(...values);
+  const range = mx - mn || 1;
+  const step = values.length > 1 ? (W - pad * 2) / (values.length - 1) : 0;
+  const pts = values.map((v, i) => [pad + i * step, H - pad - ((v - mn) / range) * (H - pad * 2)]);
+  const line = pts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+  const area = line + ` L${pts[pts.length - 1][0].toFixed(1)},${H} L${pts[0][0].toFixed(1)},${H} Z`;
+  svg.innerHTML = `
+    <path class="area" d="${area}" fill="${color}"/>
+    <path class="line" d="${line}" stroke="${color}"/>
+    ${pts.map(p => `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3" fill="${color}"/>`).join('')}
+  `;
 }
 
 function renderMetrics(){

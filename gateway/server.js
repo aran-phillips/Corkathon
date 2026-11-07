@@ -101,6 +101,17 @@ app.get("/whoop/snapshot/:patientId", async (req, res) => {
   }
 });
 
+// 5-day history. Phone app's Overview + Cardio & Vitals tabs render trends.
+app.get("/whoop/history/:patientId", async (req, res) => {
+  try {
+    const r = await fetch(`${WHOOP_URL}/patients/${req.params.patientId}/history`);
+    const body = await r.json();
+    res.status(r.status).json(body);
+  } catch (err) {
+    res.status(502).json({ error: String(err) });
+  }
+});
+
 app.get("/hospital/records", async (_req, res) => {
   try {
     const r = await fetch(`${HOSPITAL_URL}/records`);
