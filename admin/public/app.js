@@ -16,7 +16,15 @@ const state = {
   mapping: null, // { loinc, unmapped }
   compat: { patientId: null, data: null },
   whoopInspect: { patientId: null, snapshot: null },
+  transactions: {
+    records: [],
+    filter: { patient: "all", hospital: "all" },
+    openRows: new Set(),
+  },
 };
+
+// Single hospital for now; keyed so adding more later is mechanical.
+const HOSPITALS = [{ id: "hospital-local", name: "Hospital", port: "4003" }];
 
 const EVENT_CAP = 500;
 
@@ -27,6 +35,7 @@ const SECTION_META = {
   whoop:         ["Whoop API",      "Mock wearable source. Endpoints, patients, and raw snapshot inspection."],
   gateway:       ["Gateway API",    "Consent filter and translator. Endpoints and the LOINC mapping table."],
   hospital:      ["Hospital API",   "FHIR receiver, alert rules, and stored records."],
+  transactions:  ["Transactions",   "Every FHIR Bundle grouped by patient and hospital. Expand a row to see the Observations."],
   telemetry:     ["Telemetry",      "Every event the gateway emits, streamed over SSE."],
 };
 
@@ -45,6 +54,7 @@ function go(section) {
   if (section === "hospital") loadHospitalRecords();
   if (section === "gateway") loadMapping();
   if (section === "compatibility") refreshCompat();
+  if (section === "transactions") loadTransactions();
 }
 
 document.addEventListener("click", (ev) => {
@@ -200,12 +210,20 @@ async function loadHospitalRecords() {
     if (!r.ok) return;
     const records = await r.json();
     state.recordsCount = records.length;
+    state.transactions.records = records;
     renderRecordsTable(records);
     updateKPIs();
+    if (document.body.dataset.section === "transactions") renderTransactions();
   } catch {
     state.recordsCount = 0;
     updateKPIs();
   }
+}
+
+async function loadTransactions() {
+  // Always refresh — ensures the view sees the latest records.
+  await loadHospitalRecords();
+  renderTransactions();
 }
 
 function renderRecordsTable(records) {
@@ -231,6 +249,208 @@ function renderRecordsTable(records) {
   }
   $("#records-count").textContent = `${records.length} record${records.length === 1 ? "" : "s"}`;
 }
+
+// ─── Transactions ──────────────────────────────────────────
+function populateTransactionFilters() {
+  const pSel = $("#tx-filter-patient");
+  const hSel = $("#tx-filter-hospital");
+  if (!pSel || !hSel) return;
+
+  const pCurrent = pSel.value;
+  pSel.innerHTML = `<option value="all">All</option>`;
+  for (const p of state.patients) {
+    const opt = document.createElement("option");
+    opt.value = p.id;
+    opt.textContent = `${p.id} · ${p.displayName}`;
+    pSel.appendChild(opt);
+  }
+  pSel.value = [...pSel.options].some((o) => o.value === pCurrent) ? pCurrent : "all";
+
+  const hCurrent = hSel.value;
+  hSel.innerHTML = `<option value="all">All</option>`;
+  for (const h of HOSPITALS) {
+    const opt = document.createElement("option");
+    opt.value = h.id;
+    opt.textContent = `${h.name} :${h.port}`;
+    hSel.appendChild(opt);
+  }
+  hSel.value = [...hSel.options].some((o) => o.value === hCurrent) ? hCurrent : "all";
+}
+
+function renderTransactions() {
+  populateTransactionFilters();
+  const list = $("#tx-list");
+  const summaryEl = $("#tx-summary");
+  if (!list || !summaryEl) return;
+
+  const { filter, records, openRows } = state.transactions;
+  const hospital = HOSPITALS[0]; // only one hospital for now
+
+  // Apply filters.
+  let filtered = records.slice();
+  if (filter.hospital !== "all" && filter.hospital !== hospital.id) filtered = [];
+
+  // Group by patientRef.
+  const byPatient = new Map();
+  for (const rec of filtered) {
+    const ref = rec.patientRef ?? "Patient/unknown";
+    if (!byPatient.has(ref)) byPatient.set(ref, []);
+    byPatient.get(ref).push(rec);
+  }
+
+  const patientMap = Object.fromEntries(state.patients.map((p) => [p.id, p]));
+
+  // Produce ordered groups: only patients the user cares about (or all).
+  const groups = [];
+  const patientsForOrder = state.patients.length > 0
+    ? state.patients.map((p) => p.id)
+    : [...new Set(filtered.map((r) => (r.patientRef ?? "").replace("Patient/", "")))];
+  for (const id of patientsForOrder) {
+    if (filter.patient !== "all" && filter.patient !== id) continue;
+    const ref = `Patient/${id}`;
+    const recs = byPatient.get(ref);
+    if (!recs || recs.length === 0) continue;
+    groups.push({ patient: patientMap[id] ?? { id, displayName: id }, records: recs });
+  }
+
+  // Summary pills.
+  const totalTx = filtered.length;
+  const patientsWith = groups.length;
+  const totalAlerts = filtered.reduce((n, r) => n + (r.alerts?.length ?? 0), 0);
+  summaryEl.innerHTML = `
+    <div class="compat-pill" data-tone="ok">
+      <span class="compat-pill-val">${totalTx}</span>
+      <span class="compat-pill-lbl">Transactions</span>
+    </div>
+    <div class="compat-pill">
+      <span class="compat-pill-val">${patientsWith}</span>
+      <span class="compat-pill-lbl">Patients with records</span>
+    </div>
+    <div class="compat-pill" data-tone="${totalAlerts > 0 ? "warn" : ""}">
+      <span class="compat-pill-val">${totalAlerts}</span>
+      <span class="compat-pill-lbl">Total alerts</span>
+    </div>
+  `;
+
+  if (groups.length === 0) {
+    list.innerHTML = `<div class="tx-empty">No transactions match this filter — run a sync to populate.</div>`;
+    return;
+  }
+
+  list.innerHTML = "";
+  for (const g of groups) {
+    const p = g.patient;
+    const latestTs = g.records.reduce(
+      (acc, r) => (r.receivedAt > acc ? r.receivedAt : acc),
+      "0"
+    );
+    const totalObs = g.records.reduce((n, r) => n + (r.observations?.length ?? 0), 0);
+    const totalA = g.records.reduce((n, r) => n + (r.alerts?.length ?? 0), 0);
+
+    const group = document.createElement("div");
+    group.className = "tx-group";
+    group.innerHTML = `
+      <div class="tx-group-head">
+        <div class="tx-patient">
+          <span class="tx-patient-id">${p.id}</span>
+          <span class="tx-patient-name">${escape(p.displayName ?? "")}</span>
+          ${p.label ? `<span class="t-tag" data-tag="${p.label}">${p.label}</span>` : ""}
+          <span class="tx-hospital">${hospital.name} :${hospital.port}</span>
+        </div>
+        <div class="tx-counts">
+          <span><span class="tx-count-val">${g.records.length}</span> txs</span>
+          <span><span class="tx-count-val">${totalObs}</span> obs</span>
+          <span><span class="tx-count-val">${totalA}</span> alerts</span>
+          <span>Last: <span class="tx-count-val">${new Date(latestTs).toLocaleTimeString("en-GB", { hour12: false })}</span></span>
+        </div>
+      </div>
+      <table class="tx-table">
+        <thead>
+          <tr>
+            <th>Record</th>
+            <th>Received</th>
+            <th>Observations</th>
+            <th>Alerts</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${g.records
+            .slice()
+            .reverse()
+            .map((rec) => renderTxRow(rec, openRows.has(rec.id)))
+            .join("")}
+        </tbody>
+      </table>
+    `;
+    list.appendChild(group);
+  }
+
+  // Wire expand/collapse
+  $$(".tx-row-main", list).forEach((row) => {
+    row.addEventListener("click", () => {
+      const id = row.dataset.rec;
+      if (!id) return;
+      if (openRows.has(id)) openRows.delete(id);
+      else openRows.add(id);
+      renderTransactions();
+    });
+  });
+}
+
+function renderTxRow(rec, open) {
+  const alerts = rec.alerts?.length ?? 0;
+  const obsRows = (rec.observations ?? [])
+    .map((o) => {
+      const hasAlert = (o.alerts ?? []).length > 0;
+      return `
+        <tr>
+          <td><span class="tx-obs-code">${o.code}</span></td>
+          <td><span class="tx-obs-val">${o.value}</span> <span class="tx-obs-code">${o.unit ?? ""}</span></td>
+          <td><span class="tx-obs-code">${new Date(o.effectiveDateTime).toLocaleString("en-GB", { hour12: false })}</span></td>
+          <td>${hasAlert ? `<span class="tx-obs-alert">${o.alerts[0].label}</span>` : "<span class='t-last-none'>—</span>"}</td>
+        </tr>
+      `;
+    })
+    .join("");
+
+  return `
+    <tr class="tx-row-main" data-rec="${rec.id}" data-open="${open}">
+      <td>
+        <span class="tx-caret">▸</span>
+        <span class="t-id">${rec.id}</span>
+      </td>
+      <td><span class="tx-count-val">${new Date(rec.receivedAt).toLocaleString("en-GB", { hour12: false })}</span></td>
+      <td>${rec.observations?.length ?? 0}</td>
+      <td>${alerts > 0 ? `<span class="t-tag" data-tag="heart-risk">${alerts} alert${alerts === 1 ? "" : "s"}</span>` : `<span class="t-last-none">none</span>`}</td>
+    </tr>
+    ${
+      open
+        ? `
+      <tr class="tx-detail-row">
+        <td colspan="4">
+          <table class="tx-obs-table">
+            <thead>
+              <tr><th>LOINC</th><th>Value</th><th>Taken at</th><th>Flag</th></tr>
+            </thead>
+            <tbody>${obsRows || `<tr><td colspan="4" class="t-empty">No observations.</td></tr>`}</tbody>
+          </table>
+        </td>
+      </tr>
+    `
+        : ""
+    }
+  `;
+}
+
+document.addEventListener("change", (ev) => {
+  if (ev.target.id === "tx-filter-patient") {
+    state.transactions.filter.patient = ev.target.value;
+    renderTransactions();
+  } else if (ev.target.id === "tx-filter-hospital") {
+    state.transactions.filter.hospital = ev.target.value;
+    renderTransactions();
+  }
+});
 
 // ─── Mapping (Gateway page) ─────────────────────────────────
 async function loadMapping() {

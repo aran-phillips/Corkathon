@@ -52,6 +52,12 @@
           </button>
 
           <div class="side-group">Observability</div>
+          <button class="side-item" data-nav="transactions">
+            <span class="side-icon" aria-hidden="true">
+              <svg viewBox="0 0 16 16" width="16" height="16"><rect x="2" y="3" width="12" height="10" rx="1"/><line x1="2" y1="7" x2="14" y2="7" stroke="currentColor" stroke-width="1"/><line x1="6" y1="3" x2="6" y2="13" stroke="currentColor" stroke-width="1"/></svg>
+            </span>
+            Transactions
+          </button>
           <button class="side-item" data-nav="telemetry">
             <span class="side-icon" aria-hidden="true">
               <svg viewBox="0 0 16 16" width="16" height="16"><line x1="2" y1="4" x2="14" y2="4" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="8" x2="10" y2="8" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="12" x2="12" y2="12" stroke="currentColor" stroke-width="1.5"/></svg>
@@ -424,6 +430,36 @@
                 <tr><td colspan="5" class="t-empty">No records yet.</td></tr>
               </tbody>
             </table>
+          </div>
+        </section>
+
+        <!-- ─── Transactions ────────────────────────── -->
+        <section class="view" data-view="transactions">
+          <div class="panel">
+            <div class="panel-head">
+              <span class="panel-title">Transactions</span>
+              <span class="panel-aux">
+                <label class="select-inline">
+                  <span>Patient</span>
+                  <select id="tx-filter-patient">
+                    <option value="all">All</option>
+                  </select>
+                </label>
+                <label class="select-inline">
+                  <span>Hospital</span>
+                  <select id="tx-filter-hospital">
+                    <option value="all">All</option>
+                  </select>
+                </label>
+              </span>
+            </div>
+            <p class="panel-note">
+              <em>Every FHIR Bundle the hospital has accepted, grouped per patient and per hospital. Expand a transaction to see the Observations that were sent.</em>
+            </p>
+            <div class="tx-summary" id="tx-summary"></div>
+            <div id="tx-list" class="tx-list">
+              <div class="activity-empty">Loading…</div>
+            </div>
           </div>
         </section>
 
