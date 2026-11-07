@@ -1,0 +1,23 @@
+{
+  "data": [
+    {
+      "id": "8f9a5221-639e-4a85-81cb-4065ef23f979",
+      "day": "2026-11-06",
+      "score": 82,
+      "temperature_deviation": -0.1,
+      "temperature_trend_deviation": 0.05,
+      "timestamp": "2026-11-06T00:00:00+00:00",
+      "contributors": {
+        "activity_balance": 80,
+        "body_temperature": 98,
+        "hrv_balance": 75,
+        "previous_day_activity": 85,
+        "previous_night": 78,
+        "recovery_index": 90,
+        "resting_heart_rate": 88,
+        "sleep_balance": 81
+      }
+    }
+  ],
+  "next_token": null
+}

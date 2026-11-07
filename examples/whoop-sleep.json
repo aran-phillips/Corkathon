@@ -1,0 +1,25 @@
+{
+  "id": "ecfc6a15-4661-442f-a9a4-f160dd7afae8",
+  "cycle_id": 93845,
+  "user_id": 10129,
+  "start": "2022-04-24T02:25:44.774Z",
+  "end": "2022-04-24T10:25:44.774Z",
+  "timezone_offset": "+01:00",
+  "nap": false,
+  "score_state": "SCORED",
+  "score": {
+    "stage_summary": {
+      "total_in_bed_time_milli": 30272735,
+      "total_awake_time_milli": 1403507,
+      "total_light_sleep_time_milli": 14905851,
+      "total_slow_wave_sleep_time_milli": 6630370,
+      "total_rem_sleep_time_milli": 5879573,
+      "sleep_cycle_count": 3,
+      "disturbance_count": 12
+    },
+    "respiratory_rate": 16.11,
+    "sleep_performance_percentage": 98,
+    "sleep_consistency_percentage": 90,
+    "sleep_efficiency_percentage": 91.7
+  }
+}

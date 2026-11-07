@@ -1,0 +1,15 @@
+{
+  "data": [
+    {
+      "bpm": 76,
+      "source": "awake",
+      "timestamp": "2026-07-30T04:03:19+00:00"
+    },
+    {
+      "bpm": 58,
+      "source": "rest",
+      "timestamp": "2026-07-30T04:08:19+00:00"
+    }
+  ],
+  "next_token": null
+}
