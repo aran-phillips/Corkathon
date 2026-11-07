@@ -3,13 +3,26 @@
 // is unavailable or produces an invalid bundle.
 
 // Field -> LOINC mapping. Keep in sync with contracts/README.md.
-const LOINC = {
-  restingHeartRate: { code: "40443-4", display: "Resting heart rate", unit: "/min" },
-  hrvMs:            { code: "80404-7", display: "Heart rate variability SDNN", unit: "ms" },
-  spo2:             { code: "59408-5", display: "Oxygen saturation", unit: "%" },
-  sleepDurationMs:  { code: "93832-4", display: "Sleep duration", unit: "h" },
-  sleepEfficiency:  { code: "93829-0", display: "Sleep efficiency", unit: "%" },
+// `source` is the dot-path into a Whoop snapshot; consumers use this to
+// show the mapping in the dashboard's compatibility matrix.
+export const LOINC_MAPPING = {
+  restingHeartRate: { source: "recovery.restingHeartRate", code: "40443-4", display: "Resting heart rate",            unit: "/min" },
+  hrvMs:            { source: "recovery.hrvMs",            code: "80404-7", display: "Heart rate variability SDNN",   unit: "ms"   },
+  spo2:             { source: "recovery.spo2",             code: "59408-5", display: "Oxygen saturation",             unit: "%"    },
+  sleepDurationMs:  { source: "sleep.durationMs",          code: "93832-4", display: "Sleep duration",                unit: "h"    },
+  sleepEfficiency:  { source: "sleep.efficiency",          code: "93829-0", display: "Sleep efficiency",              unit: "%"    },
 };
+const LOINC = LOINC_MAPPING; // local alias
+
+// Fields the Whoop mock emits but the gateway deliberately doesn't translate.
+// Used by the compatibility matrix to explain *why* data isn't reaching the hospital.
+export const UNMAPPED_WHOOP_FIELDS = [
+  { source: "recovery.score",         reason: "Proprietary Whoop composite score — no FHIR equivalent." },
+  { source: "sleep.disturbances",     reason: "No stable FHIR concept for Whoop's disturbance count." },
+  { source: "cycle.strain",           reason: "Proprietary Whoop strain score — no FHIR equivalent." },
+  { source: "cycle.averageHeartRate", reason: "Could map to LOINC 8867-4 (heart rate) — not wired into the gateway yet." },
+  { source: "cycle.maxHeartRate",     reason: "Could map to LOINC 8867-4 max variant — not wired." },
+];
 
 const observation = (patientId, takenAt, field, rawValue) => {
   const m = LOINC[field];

@@ -3,7 +3,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { EventEmitter } from "events";
 import { consentFor } from "./consent.js";
-import { translateRuleBased } from "./translate.js";
+import { translateRuleBased, LOINC_MAPPING, UNMAPPED_WHOOP_FIELDS } from "./translate.js";
 import { translateWithClaude } from "./translate-ai.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -69,6 +69,18 @@ app.get("/consent/:patientId", (req, res) => {
   res.json(consentFor(req.params.patientId));
 });
 
+// Proxy the Whoop snapshot so the dashboard (served by the gateway) can
+// inspect raw data without needing CORS from port 4001.
+app.get("/whoop/snapshot/:patientId", async (req, res) => {
+  try {
+    const r = await fetch(`${WHOOP_URL}/patients/${req.params.patientId}/snapshot`);
+    const body = await r.json();
+    res.status(r.status).json(body);
+  } catch (err) {
+    res.status(502).json({ error: String(err) });
+  }
+});
+
 app.get("/hospital/records", async (_req, res) => {
   try {
     const r = await fetch(`${HOSPITAL_URL}/records`);
@@ -76,6 +88,98 @@ app.get("/hospital/records", async (_req, res) => {
   } catch (err) {
     res.status(502).json({ error: String(err) });
   }
+});
+
+// Expose the static LOINC + unmapped tables so the dashboard can render the
+// "Mapping" view without duplicating the schema.
+app.get("/mapping", (_req, res) => {
+  res.json({ loinc: LOINC_MAPPING, unmapped: UNMAPPED_WHOOP_FIELDS });
+});
+
+// Compatibility — for one patient, work out which Whoop fields flow through
+// to the hospital vs get blocked, and WHY. This is the "tell me how we're
+// blocked" surface the dashboard uses.
+function getByPath(obj, path) {
+  return path.split(".").reduce((o, k) => (o == null ? o : o[k]), obj);
+}
+
+app.get("/compatibility/:patientId", async (req, res) => {
+  const { patientId } = req.params;
+  let snapshot;
+  try {
+    const r = await fetch(`${WHOOP_URL}/patients/${patientId}/snapshot`);
+    if (!r.ok) return res.status(502).json({ error: `whoop ${r.status}` });
+    snapshot = await r.json();
+  } catch (err) {
+    return res.status(502).json({ error: String(err) });
+  }
+
+  const consent = consentFor(patientId);
+  const allow = new Set(consent.allow || []);
+
+  const fields = Object.entries(LOINC_MAPPING).map(([field, m]) => {
+    const value = getByPath(snapshot, m.source);
+    const present = value !== undefined && value !== null;
+    const consented = allow.has(field);
+    let status, reason;
+    if (!present) {
+      status = "missing";
+      reason = `Whoop snapshot did not include ${m.source}.`;
+    } else if (!consented) {
+      status = "blocked-by-consent";
+      reason = `Patient has not consented to share "${field}". Add it to consent.allow to flow through.`;
+    } else {
+      status = "ok";
+      reason = `Flows through consent + translator + hospital.`;
+    }
+    return {
+      field,
+      source: m.source,
+      loinc: m.code,
+      display: m.display,
+      unit: m.unit,
+      value: present ? value : null,
+      present,
+      consented,
+      mappable: true,
+      status,
+      reason,
+    };
+  });
+
+  const unmapped = UNMAPPED_WHOOP_FIELDS.map((f) => {
+    const value = getByPath(snapshot, f.source);
+    const present = value !== undefined && value !== null;
+    return {
+      source: f.source,
+      value: present ? value : null,
+      present,
+      mappable: false,
+      status: "no-mapping",
+      reason: f.reason,
+    };
+  }).filter((f) => f.present);
+
+  const blockers = [
+    ...fields.filter((f) => f.status !== "ok"),
+    ...unmapped,
+  ];
+
+  res.json({
+    patient: snapshot.patient,
+    takenAt: snapshot.takenAt,
+    consent,
+    fields,
+    unmapped,
+    summary: {
+      total: fields.length + unmapped.length,
+      flowing: fields.filter((f) => f.status === "ok").length,
+      blockedByConsent: fields.filter((f) => f.status === "blocked-by-consent").length,
+      missing: fields.filter((f) => f.status === "missing").length,
+      noMapping: unmapped.length,
+      hasBlockers: blockers.length > 0,
+    },
+  });
 });
 
 app.get("/events", (_req, res) => {

@@ -1,6 +1,7 @@
-// Corkathon admin console client.
-// Drives sidebar nav, KPI tiles, pipeline SVG, patient table, and the
-// SSE-powered telemetry log.
+// Corkathon admin console — client logic.
+// Routes between sections, drives the pipeline SVG, computes KPIs,
+// fetches + renders per-API views (Whoop / Gateway / Hospital), and
+// paints the compatibility matrix that explains blockers.
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -10,31 +11,42 @@ const state = {
   events: [], // newest-last; capped
   recordsCount: 0,
   busy: false,
-  lastSyncByPatient: {}, // patientId -> { ts, level }
+  lastSyncByPatient: {},
   filter: { level: "all", patient: "all" },
+  mapping: null, // { loinc, unmapped }
+  compat: { patientId: null, data: null },
+  whoopInspect: { patientId: null, snapshot: null },
 };
 
 const EVENT_CAP = 500;
 
 // ─── Section routing ────────────────────────────────────────
+const SECTION_META = {
+  overview:      ["Dashboard",      "Live status for the Whoop → Hospital pipeline."],
+  compatibility: ["Compatibility",  "Walk every Whoop field through consent, translator, and hospital — see exactly where things stop."],
+  whoop:         ["Whoop API",      "Mock wearable source. Endpoints, patients, and raw snapshot inspection."],
+  gateway:       ["Gateway API",    "Consent filter and translator. Endpoints and the LOINC mapping table."],
+  hospital:      ["Hospital API",   "FHIR receiver, alert rules, and stored records."],
+  telemetry:     ["Telemetry",      "Every event the gateway emits, streamed over SSE."],
+};
+
 function go(section) {
-  if (!["overview", "pipeline", "patients", "telemetry"].includes(section)) section = "overview";
+  if (!SECTION_META[section]) section = "overview";
   document.body.dataset.section = section;
-  const titles = {
-    overview: ["Overview", "Live status for the Whoop → Hospital pipeline."],
-    pipeline: ["Pipeline", "Three services, one transaction. Claude Opus 4.7 maps Whoop snapshots to FHIR."],
-    patients: ["Patients", "Enrolled in the Whoop mock, with per-patient consent."],
-    telemetry: ["Telemetry", "Every event the gateway emits, streamed over SSE."],
-  };
-  const [t, s] = titles[section];
+  const [t, s] = SECTION_META[section];
   $("#section-title").textContent = t;
   $("#section-sub").textContent = s;
-  // Apply level/patient filters when entering telemetry so it reflects current state.
   if (section === "telemetry") renderLog();
-  if (section === "patients") renderPatientsTable();
+  if (section === "whoop") {
+    renderPatientsTable();
+    const sel = $("#whoop-patient");
+    if (sel?.value && sel.value !== state.whoopInspect.patientId) loadWhoopSnapshot(sel.value);
+  }
+  if (section === "hospital") loadHospitalRecords();
+  if (section === "gateway") loadMapping();
+  if (section === "compatibility") refreshCompat();
 }
 
-// Delegate nav clicks (sidebar + any .panel-link[data-nav])
 document.addEventListener("click", (ev) => {
   const nav = ev.target.closest("[data-nav]");
   if (!nav) return;
@@ -50,19 +62,16 @@ const PACKET_X = { idle: 90, whoop: 300, translate: 500, hospital: 700, complete
 function setPipelineStage(stage, statusText) {
   if (!svg) return;
   svg.dataset.stage = stage;
-  if (pipelineStatus) pipelineStatus.textContent = statusText ?? stage;
-
   if (pipelineStatus) {
+    pipelineStatus.textContent = statusText ?? stage;
     if (stage === "idle") pipelineStatus.dataset.state = "";
     else if (stage === "complete") pipelineStatus.dataset.state = "ok";
     else if (stage.startsWith("error")) pipelineStatus.dataset.state = "err";
     else pipelineStatus.dataset.state = "running";
   }
-
   const xBase = stage.startsWith("error")
     ? PACKET_X[stage.replace("error-", "")] ?? PACKET_X.idle
     : PACKET_X[stage] ?? PACKET_X.idle;
-
   $$(".packet-group", svg).forEach((g, i) => {
     const offset = i * 12;
     g.setAttribute("transform", `translate(${xBase - 90 - offset},0)`);
@@ -73,8 +82,7 @@ setPipelineStage("idle", "Idle");
 // ─── Clock ──────────────────────────────────────────────────
 const clock = $("#clock");
 function tickClock() {
-  const d = new Date();
-  clock.textContent = d.toLocaleTimeString("en-GB", { hour12: false });
+  clock.textContent = new Date().toLocaleTimeString("en-GB", { hour12: false });
 }
 setInterval(tickClock, 1000);
 tickClock();
@@ -88,8 +96,7 @@ async function pollHealth() {
     setHealth("whoop", h.whoop.ok);
     setHealth("gateway", h.gateway.ok);
     setHealth("hospital", h.hospital.ok);
-    const aiLabel = h.ai.ok ? "claude opus 4.7" : "rule-based only";
-    $("#ai-status").textContent = aiLabel;
+    $("#ai-status").textContent = h.ai.ok ? "Claude 4.7" : "rule-based";
     $(".side-ai-dot").dataset.aiOk = String(h.ai.ok);
   } catch {
     setHealth("whoop", false);
@@ -103,30 +110,42 @@ function setHealth(node, ok) {
 pollHealth();
 setInterval(pollHealth, 5000);
 
-// ─── Patients + hospital records ────────────────────────────
+// ─── Patients ───────────────────────────────────────────────
 async function loadPatients() {
   try {
     const r = await fetch("/patients");
     if (!r.ok) throw new Error("patients fetch failed");
     state.patients = await r.json();
     renderPatientsTable();
-    populateFilterOptions();
+    populateSelectors();
     updateKPIs();
   } catch (err) {
     const tbody = $("#patients-tbody");
     if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="t-empty">Whoop unreachable: ${escape(String(err))}</td></tr>`;
   }
 }
-async function loadHospitalCount() {
-  try {
-    const r = await fetch("/hospital/records");
-    if (!r.ok) return;
-    const records = await r.json();
-    state.recordsCount = records.length;
-    updateKPIs();
-  } catch {
-    state.recordsCount = 0;
-    updateKPIs();
+
+function populateSelectors() {
+  for (const id of ["filter-patient", "compat-patient", "whoop-patient"]) {
+    const sel = document.getElementById(id);
+    if (!sel) continue;
+    const current = sel.value;
+    const includeAll = id === "filter-patient";
+    sel.innerHTML = includeAll ? `<option value="all">All</option>` : "";
+    for (const p of state.patients) {
+      const opt = document.createElement("option");
+      opt.value = p.id;
+      opt.textContent = `${p.id} · ${p.displayName}`;
+      sel.appendChild(opt);
+    }
+    sel.value = current && [...sel.options].some((o) => o.value === current)
+      ? current
+      : (includeAll ? "all" : state.patients[0]?.id ?? "");
+  }
+  // If compat has no patient yet, pick the first (makes the view useful on first load).
+  if (!state.compat.patientId && state.patients[0]) {
+    state.compat.patientId = state.patients[0].id;
+    $("#compat-patient").value = state.patients[0].id;
   }
 }
 
@@ -157,24 +176,9 @@ function renderPatientsTable() {
     tbody.appendChild(tr);
   }
   $("#patients-count").textContent = `${state.patients.length} patient${state.patients.length === 1 ? "" : "s"}`;
-
   $$(".r-run", tbody).forEach((btn) =>
     btn.addEventListener("click", () => runSync(btn.dataset.sync))
   );
-}
-
-function populateFilterOptions() {
-  const sel = $("#filter-patient");
-  if (!sel) return;
-  const current = sel.value;
-  sel.innerHTML = `<option value="all">All</option>`;
-  for (const p of state.patients) {
-    const opt = document.createElement("option");
-    opt.value = p.id;
-    opt.textContent = `${p.id} · ${p.displayName}`;
-    sel.appendChild(opt);
-  }
-  sel.value = current && $$(`option[value='${current}']`, sel).length ? current : "all";
 }
 
 // ─── KPIs ───────────────────────────────────────────────────
@@ -183,11 +187,265 @@ function updateKPIs() {
   const alerts = state.events
     .filter((e) => e.stage === "hospital" && e.level === "warn" && /alert/i.test(e.message ?? ""))
     .length;
-
   $("[data-kpi='patients']").textContent = state.patients.length;
   $("[data-kpi='syncs']").textContent = syncs;
   $("[data-kpi='records']").textContent = state.recordsCount;
   $("[data-kpi='alerts']").textContent = alerts;
+}
+
+// ─── Hospital data ──────────────────────────────────────────
+async function loadHospitalRecords() {
+  try {
+    const r = await fetch("/hospital/records");
+    if (!r.ok) return;
+    const records = await r.json();
+    state.recordsCount = records.length;
+    renderRecordsTable(records);
+    updateKPIs();
+  } catch {
+    state.recordsCount = 0;
+    updateKPIs();
+  }
+}
+
+function renderRecordsTable(records) {
+  const tbody = $("#records-tbody");
+  if (!tbody) return;
+  if (!records || records.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" class="t-empty">No records yet. Run a sync.</td></tr>`;
+    $("#records-count").textContent = "0 records";
+    return;
+  }
+  tbody.innerHTML = "";
+  for (const rec of records.slice().reverse()) {
+    const alerts = rec.alerts?.length ?? 0;
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><span class="t-id">${rec.id}</span></td>
+      <td><span class="t-id">${rec.patientRef}</span></td>
+      <td><span class="t-last">${new Date(rec.receivedAt).toLocaleTimeString("en-GB", { hour12: false })}</span></td>
+      <td>${rec.observations?.length ?? 0}</td>
+      <td>${alerts > 0 ? `<span class="t-tag" data-tag="heart-risk">${alerts} alert${alerts === 1 ? "" : "s"}</span>` : `<span class="t-last-none">none</span>`}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+  $("#records-count").textContent = `${records.length} record${records.length === 1 ? "" : "s"}`;
+}
+
+// ─── Mapping (Gateway page) ─────────────────────────────────
+async function loadMapping() {
+  if (state.mapping) return renderMapping();
+  try {
+    const r = await fetch("/mapping");
+    if (!r.ok) return;
+    state.mapping = await r.json();
+    renderMapping();
+  } catch {}
+}
+function renderMapping() {
+  const m = state.mapping;
+  if (!m) return;
+  const tbody = $("#mapping-tbody");
+  if (tbody) {
+    tbody.innerHTML = "";
+    for (const [field, info] of Object.entries(m.loinc)) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><span class="t-id">${field}</span></td>
+        <td><code>${info.source}</code></td>
+        <td><code>${info.loinc ?? info.code}</code></td>
+        <td>${escape(info.display)}</td>
+        <td><code>${info.unit}</code></td>
+      `;
+      tbody.appendChild(tr);
+    }
+  }
+  const utbody = $("#unmapped-tbody");
+  if (utbody) {
+    utbody.innerHTML = "";
+    for (const u of m.unmapped) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><code>${u.source}</code></td>
+        <td><span class="compat-reason">${escape(u.reason)}</span></td>
+      `;
+      utbody.appendChild(tr);
+    }
+  }
+}
+
+// ─── Compatibility ──────────────────────────────────────────
+async function refreshCompat() {
+  const id = state.compat.patientId;
+  if (!id) return;
+  const matrix = $("#compat-matrix");
+  const summary = $("#compat-summary");
+  matrix.innerHTML = `<div class="activity-empty">Loading…</div>`;
+  summary.innerHTML = "";
+  try {
+    const r = await fetch(`/compatibility/${id}`);
+    if (!r.ok) throw new Error(`${r.status}`);
+    const data = await r.json();
+    state.compat.data = data;
+    renderCompat(data);
+  } catch (err) {
+    matrix.innerHTML = `<div class="activity-empty">Failed: ${escape(String(err))}</div>`;
+  }
+}
+
+function renderCompat(d) {
+  const summary = $("#compat-summary");
+  const matrix = $("#compat-matrix");
+  const s = d.summary;
+
+  summary.innerHTML = `
+    <div class="compat-pill" data-tone="ok">
+      <span class="compat-pill-val">${s.flowing}</span>
+      <span class="compat-pill-lbl">Flowing through</span>
+    </div>
+    <div class="compat-pill" data-tone="${s.blockedByConsent > 0 ? "warn" : ""}">
+      <span class="compat-pill-val">${s.blockedByConsent}</span>
+      <span class="compat-pill-lbl">Blocked by consent</span>
+    </div>
+    <div class="compat-pill" data-tone="${s.missing > 0 ? "err" : ""}">
+      <span class="compat-pill-val">${s.missing}</span>
+      <span class="compat-pill-lbl">Missing from snapshot</span>
+    </div>
+    <div class="compat-pill" data-tone="${s.noMapping > 0 ? "err" : ""}">
+      <span class="compat-pill-val">${s.noMapping}</span>
+      <span class="compat-pill-lbl">No FHIR mapping</span>
+    </div>
+  `;
+
+  matrix.innerHTML = `
+    <h3 class="compat-group-title">Translatable Whoop fields</h3>
+    <table class="compat-table">
+      <thead>
+        <tr>
+          <th>Field</th>
+          <th>Value</th>
+          <th>LOINC</th>
+          <th>Flow</th>
+          <th>Status</th>
+          <th>Reason</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${d.fields.map(rowForField).join("")}
+      </tbody>
+    </table>
+
+    ${
+      d.unmapped.length > 0
+        ? `
+      <h3 class="compat-group-title">Unmapped fields present in snapshot</h3>
+      <table class="compat-table">
+        <thead>
+          <tr>
+            <th>Source</th>
+            <th>Value</th>
+            <th>Status</th>
+            <th>Reason</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${d.unmapped.map(rowForUnmapped).join("")}
+        </tbody>
+      </table>
+    `
+        : ""
+    }
+  `;
+}
+
+function rowForField(f) {
+  const ok = f.status === "ok";
+  const whoopOk = f.present;
+  const consentOk = f.consented;
+  const translatorOk = true; // mappable fields all translate
+  const hospitalOk = ok;
+  return `
+    <tr>
+      <td>
+        <div class="compat-field">${f.field}</div>
+        <div class="compat-source">${f.source}</div>
+      </td>
+      <td>${
+        f.present
+          ? `<span class="compat-value">${formatValue(f.value, f.unit)}</span>`
+          : `<span class="compat-value-dim">—</span>`
+      }</td>
+      <td><code>${f.loinc}</code></td>
+      <td>
+        <div class="compat-flow">
+          <span class="compat-stage" data-ok="${whoopOk}" title="Whoop">A</span>
+          <span class="compat-connector"></span>
+          <span class="compat-stage" data-ok="${consentOk}" title="Consent">★</span>
+          <span class="compat-connector"></span>
+          <span class="compat-stage" data-ok="${translatorOk}" title="Translator">B</span>
+          <span class="compat-connector"></span>
+          <span class="compat-stage" data-ok="${hospitalOk}" title="Hospital">C</span>
+        </div>
+      </td>
+      <td><span class="compat-status" data-status="${f.status}">${labelForStatus(f.status)}</span></td>
+      <td><span class="compat-reason">${escape(f.reason)}</span></td>
+    </tr>
+  `;
+}
+function rowForUnmapped(u) {
+  return `
+    <tr>
+      <td><code>${u.source}</code></td>
+      <td>${u.present ? `<span class="compat-value">${u.value}</span>` : `<span class="compat-value-dim">—</span>`}</td>
+      <td><span class="compat-status" data-status="${u.status}">${labelForStatus(u.status)}</span></td>
+      <td><span class="compat-reason">${escape(u.reason)}</span></td>
+    </tr>
+  `;
+}
+function labelForStatus(s) {
+  switch (s) {
+    case "ok": return "Ok";
+    case "blocked-by-consent": return "Blocked by consent";
+    case "missing": return "Missing";
+    case "no-mapping": return "No FHIR mapping";
+    default: return s;
+  }
+}
+function formatValue(v, unit) {
+  if (typeof v === "number") return `${v} ${unit ?? ""}`.trim();
+  return escape(String(v));
+}
+
+// Compat patient selector
+document.addEventListener("change", (ev) => {
+  const sel = ev.target.closest("#compat-patient");
+  if (sel) {
+    state.compat.patientId = sel.value;
+    refreshCompat();
+  }
+  const wsel = ev.target.closest("#whoop-patient");
+  if (wsel) loadWhoopSnapshot(wsel.value);
+});
+
+// ─── Whoop snapshot inspector ───────────────────────────────
+async function loadWhoopSnapshot(patientId) {
+  if (!patientId) return;
+  state.whoopInspect.patientId = patientId;
+  const el = $("#whoop-raw");
+  el.innerHTML = `<span class="dim">Loading…</span>`;
+  try {
+    // Gateway doesn't proxy the Whoop snapshot directly, hit Whoop via the gateway's /sync side-effects —
+    // actually easiest is to hit Whoop through the admin via a direct fetch since both services are same-origin dev.
+    // But gateway serves this page, so cross-origin to :4001 would need CORS. Use the proxy /patients endpoint?
+    // No, /patients only returns the list. Expose a dedicated proxy.
+    const r = await fetch(`/whoop/snapshot/${encodeURIComponent(patientId)}`);
+    if (!r.ok) throw new Error(`${r.status}`);
+    const snap = await r.json();
+    state.whoopInspect.snapshot = snap;
+    el.innerHTML = renderJSON(snap);
+  } catch (err) {
+    el.innerHTML = `<span class="dim">Failed: ${escape(String(err))}</span>`;
+  }
 }
 
 // ─── Run sync ───────────────────────────────────────────────
@@ -226,7 +484,7 @@ async function runSync(patientId) {
   }
 
   renderPatientsTable();
-  loadHospitalCount();
+  loadHospitalRecords();
   state.busy = false;
   setAllRunButtons(false);
 }
@@ -261,31 +519,17 @@ function paintTrace(data, opts = {}) {
     if (pre) pre.innerHTML = body;
   };
 
-  if (data.snapshot) {
-    setStage("whoop", "ok", renderJSON(data.snapshot));
-  } else if (opts.errorStage === "whoop") {
-    setStage("whoop", "err", `<span class="dim">${escape(data?.body ?? data?.error ?? "unknown")}</span>`);
-  }
+  if (data.snapshot) setStage("whoop", "ok", renderJSON(data.snapshot));
+  else if (opts.errorStage === "whoop") setStage("whoop", "err", `<span class="dim">${escape(data?.body ?? data?.error ?? "unknown")}</span>`);
 
-  if (data.bundle) {
-    setStage("translate", data.aiError ? "warn" : "ok", renderJSON(data.bundle));
-  } else if (opts.errorStage === "translate") {
-    setStage(
-      "translate",
-      "err",
-      `<span class="dim">ai: ${escape(data?.ai ?? "n/a")}<br/>rule: ${escape(data?.rule ?? "n/a")}</span>`
-    );
-  }
+  if (data.bundle) setStage("translate", data.aiError ? "warn" : "ok", renderJSON(data.bundle));
+  else if (opts.errorStage === "translate") setStage("translate", "err", `<span class="dim">ai: ${escape(data?.ai ?? "n/a")}<br/>rule: ${escape(data?.rule ?? "n/a")}</span>`);
 
   if (data.hospital) {
     const alerts = data.hospital.alerts?.length ?? 0;
     setStage("hospital", alerts > 0 ? "warn" : "ok", renderJSON(data.hospital));
   } else if (opts.errorStage === "hospital") {
-    setStage(
-      "hospital",
-      "err",
-      `<span class="dim">${escape(JSON.stringify(data?.body ?? data?.error ?? {}, null, 2))}</span>`
-    );
+    setStage("hospital", "err", `<span class="dim">${escape(JSON.stringify(data?.body ?? data?.error ?? {}, null, 2))}</span>`);
   }
 }
 
@@ -315,7 +559,7 @@ function pushEvent(ev) {
   updateKPIs();
   renderActivity();
   if (document.body.dataset.section === "telemetry") renderLog();
-  if (document.body.dataset.section === "patients") renderPatientsTable();
+  if (document.body.dataset.section === "whoop") renderPatientsTable();
 }
 
 function renderActivity() {
@@ -384,7 +628,6 @@ $("#clearLog").addEventListener("click", () => {
   renderLog();
 });
 
-// Pipeline stage driven by events (live reflection in Overview view).
 function reactToEventForPipeline(ev) {
   if (ev.level === "ok") {
     if (ev.stage === "whoop") setPipelineStage("translate", "Translating…");
@@ -420,4 +663,4 @@ function connectStream() {
 go("overview");
 connectStream();
 loadPatients();
-loadHospitalCount();
+loadHospitalRecords();
