@@ -1,5 +1,5 @@
 // HealthConnect static demo — client-side mock of the four services.
-// Intercepts fetch() and EventSource() so the admin / operator / phone
+// Intercepts fetch() and EventSource() so the admin / phone / clinician-EHR
 // pages run against a canned pipeline when deployed to Vercel.
 
 (function () {
