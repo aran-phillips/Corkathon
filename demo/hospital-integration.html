@@ -887,6 +887,37 @@ $('#resetBtn').onclick = () => { mock.reset(); Object.assign(state, { obs: [], m
   $('#ibBtn').classList.remove('has'); $('#ntoast').classList.remove('show'); $('#ib').classList.remove('show'); $('#shareSt').textContent = '';
   $('#statIf').textContent = 'Interface WATCHLINK (FHIR R4): active · no messages today'; setAct('summary'); };
 setInterval(() => $('#clock').textContent = new Date().toLocaleString('en-IE', { dateStyle: 'short', timeStyle: 'short' }), 1000);
+
+/* ---- Corkathon admin bridge ---- */
+/* Polls admin's /fhir/Observation (which fronts the hospital service) and
+   injects any observations into the demo's mock FHIR store under the
+   current patient. Lets the wearable demo → admin → hospital flow show
+   up here without changing the demo's internal shape. */
+const ADMIN_BASE = (location.origin && location.origin.startsWith('http')) ? location.origin : 'http://localhost:4000';
+async function syncFromAdmin(){
+  try {
+    const r = await fetch(ADMIN_BASE + '/fhir/Observation');
+    if (!r.ok) return;
+    const bundle = await r.json();
+    const incoming = (bundle.entry || []).map(e => e.resource).filter(Boolean);
+    let added = 0;
+    for (const o of incoming){
+      if (!o.id || mock.store.Observation.has(o.id)) continue;
+      o.subject = { reference: 'Patient/' + PID };
+      o.meta = Object.assign({ versionId: '1', lastUpdated: o.effectiveDateTime || new Date().toISOString() }, o.meta || {});
+      o.device = o.device || { display: 'Corkathon admin (hospital)' };
+      mock.store.Observation.set(o.id, o);
+      added++;
+    }
+    if (added > 0){
+      await loadObs('Corkathon admin → LVUH EHR');
+      render();
+    }
+  } catch { /* admin not reachable; silently ignore */ }
+}
+syncFromAdmin();
+setInterval(syncFromAdmin, 5000);
+
 render();
 </script>
 </body>

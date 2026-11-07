@@ -5,17 +5,35 @@
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
+import { EventEmitter } from "events";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 app.use(express.json({ limit: "1mb" }));
 app.use(express.static(path.join(__dirname, "public")));
+// Serve the teammate's standalone demos from the repo's /demo directory.
+app.use("/demo", express.static(path.join(__dirname, "..", "demo")));
 
 const port = process.env.PORT || 4000;
 const WHOOP_URL = process.env.WHOOP_URL || "http://localhost:4001";
 const GATEWAY_URL = process.env.GATEWAY_URL || "http://localhost:4002";
 const HOSPITAL_URL = process.env.HOSPITAL_URL || "http://localhost:4003";
+
+// Admin's own event buffer + bus. Direct FHIR POSTs (from the wearable
+// demo via /fhir/Bundle) don't flow through the gateway, so the admin
+// logs them here. The /events and /events/stream endpoints merge these
+// with the gateway's telemetry so the dashboard sees both sources.
+const EVENT_CAP = 200;
+const localEvents = [];
+const localBus = new EventEmitter();
+function logLocalEvent(ev) {
+  const entry = { ts: new Date().toISOString(), source: "admin", ...ev };
+  localEvents.push(entry);
+  if (localEvents.length > EVENT_CAP) localEvents.shift();
+  localBus.emit("event", entry);
+  return entry;
+}
 
 app.get("/health", (_req, res) =>
   res.json({ ok: true, service: "admin", gateway: GATEWAY_URL, hospital: HOSPITAL_URL, whoop: WHOOP_URL })
@@ -71,7 +89,19 @@ app.get("/compatibility/:id", (req, res) =>
 app.get("/consent/:id", (req, res) =>
   passthroughGet(`${GATEWAY_URL}/consent/${encodeURIComponent(req.params.id)}`, res)
 );
-app.get("/events", (_req, res) => passthroughGet(`${GATEWAY_URL}/events`, res));
+// Events = gateway events + admin's own local events, newest first.
+app.get("/events", async (_req, res) => {
+  try {
+    const r = await fetch(`${GATEWAY_URL}/events`);
+    const gatewayEvents = r.ok ? await r.json() : [];
+    const merged = [...gatewayEvents, ...localEvents.slice().reverse()].sort(
+      (a, b) => (a.ts < b.ts ? 1 : a.ts > b.ts ? -1 : 0)
+    );
+    res.json(merged);
+  } catch {
+    res.json(localEvents.slice().reverse());
+  }
+});
 app.get("/whoop/snapshot/:id", (req, res) =>
   passthroughGet(`${GATEWAY_URL}/whoop/snapshot/${encodeURIComponent(req.params.id)}`, res)
 );
@@ -102,15 +132,126 @@ app.get("/hospital/patients/:ref/records", (req, res) =>
   passthroughGet(`${HOSPITAL_URL}/patients/${encodeURIComponent(req.params.ref)}/records`, res)
 );
 
-// ── SSE passthrough ──
-// Pipes gateway's telemetry stream through to the client. Preserves SSE
-// framing bytes, so the browser EventSource sees the same events as if it
-// had connected to the gateway directly.
+// ── FHIR surface (direct POST + GET to hospital) ──
+// This is what the wearable-app demo talks to. POSTing a transaction
+// Bundle to the FHIR base (`/fhir`) is the standard pattern; we also
+// accept `/fhir/Bundle` for clients that use the explicit form. Both
+// forward to the hospital's /fhir/Bundle. Admin emits telemetry events
+// so the dashboard reflects the inbound traffic even though it bypassed
+// the gateway's /sync path.
+async function handleFhirPost(req, res) {
+  const bundle = req.body ?? {};
+  const patientRef =
+    bundle?.entry?.find?.((e) => e?.resource?.subject?.reference)?.resource?.subject?.reference ??
+    bundle?.entry?.find?.((e) => e?.resource?.resourceType === "Patient")?.resource?.id ??
+    "unknown";
+  const patientId = String(patientRef).replace(/^Patient\//, "");
+  const runId = `inbound-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+
+  logLocalEvent({
+    runId,
+    patientId,
+    stage: "fhir-inbound",
+    level: "info",
+    message: `FHIR Bundle received from wearable app`,
+  });
+
+  try {
+    const r = await fetch(`${HOSPITAL_URL}/fhir/Bundle`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(bundle),
+    });
+    const body = await r.json();
+    const alerts = body?.alerts?.length ?? 0;
+    logLocalEvent({
+      runId,
+      patientId,
+      stage: "hospital",
+      level: r.ok ? (alerts > 0 ? "warn" : "ok") : "error",
+      message: r.ok
+        ? `hospital ${r.status} → ${body?.id ?? ""}${alerts ? ` · ${alerts} alert${alerts === 1 ? "" : "s"}` : ""}`
+        : `hospital ${r.status} rejected bundle`,
+    });
+    res.status(r.status).json(body);
+  } catch (err) {
+    logLocalEvent({
+      runId,
+      patientId,
+      stage: "hospital",
+      level: "error",
+      message: String(err),
+    });
+    res.status(502).json({ error: String(err) });
+  }
+}
+
+app.post("/fhir/Bundle", handleFhirPost);
+app.post("/fhir", handleFhirPost);
+
+// Minimal FHIR GET surface for the hospital-integration demo. Right now we
+// surface what the hospital store natively supports (records) via a tiny
+// shim that mimics a FHIR searchset Bundle of Observations.
+app.get("/fhir/Observation", async (req, res) => {
+  try {
+    const r = await fetch(`${HOSPITAL_URL}/records`);
+    if (!r.ok) return res.status(502).json({ error: `hospital ${r.status}` });
+    const records = await r.json();
+    const entries = [];
+    for (const rec of records) {
+      for (const obs of rec.observations ?? []) {
+        entries.push({
+          fullUrl: `urn:hospital:${rec.id}:${obs.code}`,
+          resource: {
+            resourceType: "Observation",
+            id: `${rec.id}-${obs.code}`,
+            status: "final",
+            code: { coding: [{ system: "http://loinc.org", code: obs.code }] },
+            subject: { reference: rec.patientRef },
+            effectiveDateTime: obs.effectiveDateTime,
+            valueQuantity: {
+              value: obs.value,
+              unit: obs.unit,
+              system: "http://unitsofmeasure.org",
+              code: obs.unit,
+            },
+            meta: { tag: [{ system: "https://corkathon/alerts", code: (obs.alerts ?? []).map((a) => a.label).join(",") || "none" }] },
+          },
+          search: { mode: "match" },
+        });
+      }
+    }
+    res.json({
+      resourceType: "Bundle",
+      type: "searchset",
+      total: entries.length,
+      entry: entries,
+    });
+  } catch (err) {
+    res.status(502).json({ error: String(err) });
+  }
+});
+
+// ── SSE: merged stream ──
+// Fans in two sources: (1) the gateway's telemetry stream (piped through
+// byte-for-byte to preserve framing), and (2) admin's own local events
+// (direct FHIR POSTs that bypass the gateway). The browser EventSource
+// sees a single feed.
 app.get("/events/stream", (req, res) => {
   res.setHeader("content-type", "text/event-stream");
   res.setHeader("cache-control", "no-cache, no-transform");
   res.setHeader("connection", "keep-alive");
   res.flushHeaders?.();
+
+  // Hello: send recent local events alongside the gateway's hello dump.
+  res.write(
+    `event: hello\ndata: ${JSON.stringify({
+      recent_local: localEvents.slice(-50),
+    })}\n\n`
+  );
+
+  const localHandler = (ev) => res.write(`event: telemetry\ndata: ${JSON.stringify(ev)}\n\n`);
+  localBus.on("event", localHandler);
 
   const controller = new AbortController();
   (async () => {
@@ -119,10 +260,7 @@ app.get("/events/stream", (req, res) => {
         signal: controller.signal,
         headers: { accept: "text/event-stream" },
       });
-      if (!upstream.body) {
-        res.end();
-        return;
-      }
+      if (!upstream.body) return;
       const reader = upstream.body.getReader();
       while (true) {
         const { done, value } = await reader.read();
@@ -132,12 +270,15 @@ app.get("/events/stream", (req, res) => {
     } catch {
       /* upstream drop or abort */
     }
+  })();
+
+  req.on("close", () => {
+    localBus.off("event", localHandler);
+    controller.abort();
     try {
       res.end();
     } catch {}
-  })();
-
-  req.on("close", () => controller.abort());
+  });
 });
 
 app.listen(port, () => {
