@@ -244,7 +244,7 @@ details.res pre{margin:0 0 8px}
       </div>
       <div class="banner">
         <div class="av">JM</div>
-        <div><div class="nm">MURPHY, Jane</div><div class="mt">F · 58 y · DOB 14-Mar-1968 · MRN 0048213</div></div>
+        <div><div class="nm">MURPHY, Jane</div><div class="mt">F · 58 y · DOB 14-Mar-1968 · PPSN 1234567TW · IHI 123456789012345678</div></div>
         <span class="flag r">Allergy: Penicillin</span>
         <span class="flag a">Anticoagulated</span>
         <div class="loc">Outpatient · Cardiology clinic<br>Next review 21-Nov</div>
@@ -292,7 +292,9 @@ function uuid(r){ const h = () => Math.floor(r()*16).toString(16); let s=''; for
 
 const LOINC = 'http://loinc.org', UCUM = 'http://unitsofmeasure.org';
 const LOCAL = 'https://watchlink.example/fhir/CodeSystem/wearable-metric';
-const MRN_SYS = 'urn:lvuh:mrn', MRN = '0048213';
+const PPSN_SYS = 'urn:example:ie:ppsn', PPSN = '1234567TW';
+const IHI_SYS = 'urn:example:ie:ihi', IHI = '123456789012345678';
+const PT_IDS = [{ system: IHI_SYS, value: IHI }, { system: PPSN_SYS, value: PPSN }];
 
 /* ---------- the patient's story (same physiology, three vendor formats) ---------- */
 function story(n, seed){
@@ -519,8 +521,8 @@ function hrSeries(start, end, periodMs, values, dev){
 
 function buildBundle(src, obs){
   const entry = [
-    { fullUrl: 'urn:uuid:patient', resource: { resourceType: 'Patient', identifier: [{ system: MRN_SYS, value: MRN }], name: [{ family: 'Murphy', given: ['Jane'] }], gender: 'female', birthDate: '1968-03-14' },
-      request: { method: 'POST', url: 'Patient', ifNoneExist: `identifier=${MRN_SYS}|${MRN}` } },
+    { fullUrl: 'urn:uuid:patient', resource: { resourceType: 'Patient', identifier: PT_IDS, name: [{ family: 'Murphy', given: ['Jane'] }], gender: 'female', birthDate: '1968-03-14' },
+      request: { method: 'POST', url: 'Patient', ifNoneExist: `identifier=${IHI_SYS}|${IHI}` } },
     { fullUrl: 'urn:uuid:device', resource: { resourceType: 'Device', manufacturer: src.deviceRes.manufacturer, deviceName: [{ name: src.deviceRes.model, type: 'model-name' }], type: { text: 'Consumer wearable' }, note: [{ text: 'Consumer device, data relayed by WatchLink. Not clinically validated.' }] },
       request: { method: 'POST', url: 'Device' } },
     ...obs.map((o, i) => ({ fullUrl: 'urn:uuid:obs-' + (i + 1), resource: o, request: { method: 'POST', url: 'Observation' } }))
@@ -535,7 +537,7 @@ class MockFhir {
     this.seq = 5000;
     this.store = { Patient: new Map(), Device: new Map(), Observation: new Map() };
     this.store.Patient.set('lvuh-1001', { resourceType: 'Patient', id: 'lvuh-1001', meta: { versionId: '1', lastUpdated: '2019-06-02T09:14:00Z' },
-      identifier: [{ system: MRN_SYS, value: MRN }], name: [{ family: 'Murphy', given: ['Jane'] }], gender: 'female', birthDate: '1968-03-14' });
+      identifier: PT_IDS, name: [{ family: 'Murphy', given: ['Jane'] }], gender: 'female', birthDate: '1968-03-14' });
   }
   async handle(method, path, body){
     await sleep(180 + Math.random() * 320);
@@ -666,9 +668,9 @@ async function send(){
   btn.disabled = false;
   if (!r.ok){ st.className = 'err'; st.textContent = `Send failed (${r.status}). See API traffic below.`; return; }
   const created = r.body.entry.filter(e => e.response.status.startsWith('201')).length;
-  st.className = 'ok'; st.textContent = `✓ Sent. Hospital accepted ${created} new resources (201 Created) and matched your record by MRN.`;
+  st.className = 'ok'; st.textContent = `✓ Sent. Hospital accepted ${created} new resources (201 Created) and matched your record by IHI.`;
   await sleep(500);
-  log({ actor: 'Hospital FHIR → EHR', method: 'NOTIFY', path: `Subscription rest-hook (simulated): new Observation for Patient MRN ${MRN}`, status: 200, ms: 40, res: { resourceType: 'Bundle', type: 'subscription-notification', entry: [{ fullUrl: base() + '/Subscription/wearable-inbox' }] } });
+  log({ actor: 'Hospital FHIR → EHR', method: 'NOTIFY', path: `Subscription rest-hook (simulated): new Observation for Patient IHI ${IHI}`, status: 200, ms: 40, res: { resourceType: 'Bundle', type: 'subscription-notification', entry: [{ fullUrl: base() + '/Subscription/wearable-inbox' }] } });
   state.unread++; state.pending += state.conv.obs.length;
   $('#bell').classList.add('has'); $('#bellN').textContent = state.unread;
   $('#toastTx').innerHTML = `<b>New patient-generated data</b> from ${esc(src.device)} via WatchLink (${state.pending} observations).`;
@@ -686,7 +688,7 @@ async function ehrConnect(){
 }
 
 async function ehrLoad(){
-  const p = await api('EHR → Hospital FHIR', 'GET', '/Patient?identifier=' + encodeURIComponent(`${MRN_SYS}|${MRN}`), null, 2);
+  const p = await api('EHR → Hospital FHIR', 'GET', '/Patient?identifier=' + encodeURIComponent(`${IHI_SYS}|${IHI}`), null, 2);
   const pt = p.ok && p.body?.entry?.[0]?.resource;
   state.patientId = pt ? pt.id : null; state.obs = [];
   if (state.patientId){
@@ -770,7 +772,7 @@ function renderEHR(){
 
   // Summary
   const pgd = !state.patientId
-    ? `<div class="empty">Patient record not found on this FHIR server yet. It will be created when the patient first shares data (conditional create by MRN).</div>`
+    ? `<div class="empty">Patient record not found on this FHIR server yet. It will be created when the patient first shares data (conditional create by IHI).</div>`
     : !has ? `<div class="empty">No wearable data shared yet. Data appears here when the patient shares it from the WatchLink app.</div>`
     : `<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--ink2);margin-bottom:10px">
          <span><b style="color:var(--ink)">${state.obs.length}</b> observations</span><span>Source: ${esc(devices.join(', '))}</span><span>Last received ${fmtDT(lastRx)}</span></div>

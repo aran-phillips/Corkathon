@@ -185,7 +185,7 @@ body.ip .legend{display:block}
   </div>
   <div class="ptabs"><div class="ptab">Schedule</div><div class="ptab on">Murphy, Jane ✕</div></div>
   <div class="ph">
-    <div><div class="nm">Murphy, Jane</div><div>58 y.o. Female · DOB 14/03/1968</div><div>MRN 0048213</div></div>
+    <div><div class="nm">Murphy, Jane</div><div>58 y.o. Female · DOB 14/03/1968</div><div>PPSN 1234567TW</div><div>IHI 123456789012345678</div></div>
     <div><span class="l">Consultant:</span> Byrne, Aoife<br><span class="l">Location:</span> Cardiology OPD<br><span class="l">Visit:</span> Review 21/11/2026</div>
     <div><span class="l">Allergies:</span> <span class="al">Penicillin</span><br><span class="l">Code:</span> Full<br><span class="l">Isolation:</span> None</div>
     <div><span class="l">Weight:</span> 71.2 kg (12/10)<br><span class="l">BMI:</span> 26.1<br><span class="l">GP:</span> Dr. P. O'Sullivan</div>
@@ -251,7 +251,9 @@ function uuid(r){ const h = () => Math.floor(r()*16).toString(16); let s=''; for
 
 const LOINC = 'http://loinc.org', UCUM = 'http://unitsofmeasure.org';
 const LOCAL = 'https://watchlink.example/fhir/CodeSystem/wearable-metric';
-const MRN_SYS = 'urn:lvuh:mrn', MRN = '0048213';
+const PPSN_SYS = 'urn:example:ie:ppsn', PPSN = '1234567TW';
+const IHI_SYS = 'urn:example:ie:ihi', IHI = '123456789012345678';
+const PT_IDS = [{ system: IHI_SYS, value: IHI }, { system: PPSN_SYS, value: PPSN }];
 
 /* ---------- the patient's story (same physiology, three vendor formats) ---------- */
 function story(n, seed){
@@ -478,8 +480,8 @@ function hrSeries(start, end, periodMs, values, dev){
 
 function buildBundle(src, obs){
   const entry = [
-    { fullUrl: 'urn:uuid:patient', resource: { resourceType: 'Patient', identifier: [{ system: MRN_SYS, value: MRN }], name: [{ family: 'Murphy', given: ['Jane'] }], gender: 'female', birthDate: '1968-03-14' },
-      request: { method: 'POST', url: 'Patient', ifNoneExist: `identifier=${MRN_SYS}|${MRN}` } },
+    { fullUrl: 'urn:uuid:patient', resource: { resourceType: 'Patient', identifier: PT_IDS, name: [{ family: 'Murphy', given: ['Jane'] }], gender: 'female', birthDate: '1968-03-14' },
+      request: { method: 'POST', url: 'Patient', ifNoneExist: `identifier=${IHI_SYS}|${IHI}` } },
     { fullUrl: 'urn:uuid:device', resource: { resourceType: 'Device', manufacturer: src.deviceRes.manufacturer, deviceName: [{ name: src.deviceRes.model, type: 'model-name' }], type: { text: 'Consumer wearable' }, note: [{ text: 'Consumer device, data relayed by WatchLink. Not clinically validated.' }] },
       request: { method: 'POST', url: 'Device' } },
     ...obs.map((o, i) => ({ fullUrl: 'urn:uuid:obs-' + (i + 1), resource: o, request: { method: 'POST', url: 'Observation' } }))
@@ -494,7 +496,7 @@ class MockFhir {
     this.seq = 5000;
     this.store = { Patient: new Map(), Device: new Map(), Observation: new Map() };
     this.store.Patient.set('lvuh-1001', { resourceType: 'Patient', id: 'lvuh-1001', meta: { versionId: '1', lastUpdated: '2019-06-02T09:14:00Z' },
-      identifier: [{ system: MRN_SYS, value: MRN }], name: [{ family: 'Murphy', given: ['Jane'] }], gender: 'female', birthDate: '1968-03-14' });
+      identifier: PT_IDS, name: [{ family: 'Murphy', given: ['Jane'] }], gender: 'female', birthDate: '1968-03-14' });
   }
   async handle(method, path, body){
     await sleep(180 + Math.random() * 320);
@@ -665,7 +667,7 @@ async function share(){
   if (!r.ok){ st.style.color = '#c0362c'; st.textContent = 'Hospital rejected the bundle.'; btn.disabled = false; return; }
   // 2. tell the clinician: Communication
   const flags = alertsFor(conv.obs);
-  const txt = `WatchLink received ${state.days} days of data from ${src.device} for MURPHY, Jane (MRN ${MRN}).\n\n` +
+  const txt = `WatchLink received ${state.days} days of data from ${src.device} for MURPHY, Jane (IHI ${IHI}).\n\n` +
     (flags.length ? `Flags:\n${flags.map(f => '• ' + f.text).join('\n')}\n\n` : 'No flags.\n\n') +
     `${conv.obs.length} readings have been filed to the chart (Flowsheets › Patient-Generated Data – Wearable).\nOpen the WatchLink app in the chart for trends.\n\nPatient-generated data from a consumer device. Not clinically validated.`;
   const comm = { resourceType: 'Communication', status: 'completed', category: [{ text: 'Patient-generated data' }], priority: flags.some(f => f.level === 'danger') ? 'urgent' : 'routine',
@@ -694,7 +696,7 @@ function renderInbox(){
       ${m.priority === 'urgent' ? '<span class="abn">!</span> ' : ''}Patient-generated data received<br><span class="muted">${esc(m.subject.display)} · from ${esc(m.sender.display)} · ${fmtDT(m.sent)} · ${esc(m.note[0].text)}</span></div>`).join('')
     : '<div class="ibm muted">No messages.</div>';
   const m = state.msgs.find(x => x.id === state.selMsg);
-  $('#ibDet').innerHTML = m ? `<b>Patient-generated data received</b>  <span class="muted">${fmtDT(m.sent)}</span>\nPatient: ${esc(m.subject.display)} (MRN ${MRN})   From: ${esc(m.sender.display)}\n\n${esc(m.payload[0].contentString)}\n\n<button class="btn pri" id="ibOpen">Open Chart</button> <button class="btn" id="ibDone">Done</button>` : '<span class="muted">Select a message.</span>';
+  $('#ibDet').innerHTML = m ? `<b>Patient-generated data received</b>  <span class="muted">${fmtDT(m.sent)}</span>\nPatient: ${esc(m.subject.display)} (IHI ${IHI})   From: ${esc(m.sender.display)}\n\n${esc(m.payload[0].contentString)}\n\n<button class="btn pri" id="ibOpen">Open Chart</button> <button class="btn" id="ibDone">Done</button>` : '<span class="muted">Select a message.</span>';
 }
 
 /* ---- data + 3. CDS Hooks ---- */
