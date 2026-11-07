@@ -46,7 +46,11 @@ curl http://localhost:4003/records | jq
 ### `gateway/` — translator (Person B)
 - `POST /sync/:patientId` — pulls snapshot, applies consent, translates, posts bundle.
 - Consent defaults in [`gateway/consent.js`](gateway/consent.js); override per-request via body `{ "consent": { "allow": [...] } }`.
-- AI path in [`gateway/translate-ai.js`](gateway/translate-ai.js) is a stub — currently always falls back to the rule-based translator in [`gateway/translate.js`](gateway/translate.js).
+- Translator in [`gateway/translate-ai.js`](gateway/translate-ai.js) calls Claude Opus 4.7 with a FHIR Bundle JSON schema (structured outputs). Set `ANTHROPIC_API_KEY` to enable it:
+  ```bash
+  ANTHROPIC_API_KEY=sk-ant-... npm run dev
+  ```
+- If the key is absent, or Claude returns a malformed/empty bundle, the gateway falls back to the rule-based translator in [`gateway/translate.js`](gateway/translate.js). The response `translator` field says which path produced the bundle.
 
 ### `hospital/` — FHIR receiver (Person C)
 - `POST /fhir/Bundle` — validates, stores, returns `201` with alerts or `422` with errors.
