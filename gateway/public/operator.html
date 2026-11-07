@@ -109,12 +109,23 @@ select{font:inherit}
 .mtable code{font:11.5px var(--mono);background:#f4f6f9;padding:1px 6px;border-radius:4px;color:var(--ink)}
 .mtable tr.unmapped td{color:var(--ink2)}
 .mtable tr.unmapped td:first-child{color:var(--ink3);font-style:italic}
+
+/* Corkathon cross-site nav */
+.cork-nav{display:flex;align-items:center;gap:4px}
+.cork-nav a{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;font-size:12px;color:var(--ink2);text-decoration:none;border-radius:6px;border:1px solid transparent;transition:background 120ms,border-color 120ms,color 120ms}
+.cork-nav a:hover{background:#f4f6f9;color:var(--ink);border-color:var(--line)}
+.cork-nav a .ext{font-size:10.5px;color:var(--ink3)}
 </style>
 </head>
 <body>
 
 <div class="top">
   <h1>WatchLink Gateway <small>operator console · :4002</small></h1>
+  <nav class="cork-nav" aria-label="HealthConnect services">
+    <a data-cork-port="4002" data-cork-path="/whoop.html" title="WHOOP phone app">WHOOP app <span class="ext">↗</span></a>
+    <a data-cork-port="4000" data-cork-path="/" title="Admin console">Admin <span class="ext">↗</span></a>
+    <a data-cork-port="4000" data-cork-path="/#hospital" title="Hospital stored records">Hospital <span class="ext">↗</span></a>
+  </nav>
   <div class="sp"></div>
   <span class="pill" id="aiPill">AI translator: <b id="aiLbl">—</b></span>
   <span class="pill" id="cnPill">Events: <b id="cnLbl">—</b></span>
@@ -186,6 +197,14 @@ select{font:inherit}
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const state = { patients: [], selected: null, snapshot: null, compat: null, mapping: null, feed: [], eventCount: 0 };
+
+// Resolve cross-site nav hrefs against the current hostname.
+(function wireCorkNav() {
+  const host = window.location.hostname || "localhost";
+  $$(".cork-nav a").forEach((a) => {
+    a.href = `http://${host}:${a.dataset.corkPort}${a.dataset.corkPath}`;
+  });
+})();
 
 function escape(s){ return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function renderJSON(obj){

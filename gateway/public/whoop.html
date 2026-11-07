@@ -63,6 +63,49 @@
       padding: 0;
     }
 
+    /* ─── Corkathon Cross-Site Nav (dev strip) ─── */
+    .corkathon-nav {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      background: #0b0e12;
+      border: 1px solid var(--border-hairline);
+      padding: 4px 6px 4px 4px;
+      border-radius: 999px;
+      margin-bottom: 10px;
+    }
+
+    .cork-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      padding: 0 10px 0 12px;
+      border-right: 1px solid rgba(255, 255, 255, 0.07);
+      margin-right: 4px;
+    }
+
+    .cork-link {
+      padding: 5px 11px;
+      border-radius: 999px;
+      font-size: 11.5px;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.18s var(--ease-out), background 0.18s var(--ease-out);
+    }
+
+    .cork-link:hover {
+      color: var(--text-white);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .cork-link.current {
+      color: var(--text-white);
+      background: var(--surface-2);
+    }
+
     /* ─── Minimalist Patient Switcher (Above Phone) ─── */
     .switcher-bar {
       display: flex;
@@ -1501,6 +1544,167 @@
       border: 1px solid var(--border-subtle);
     }
 
+    /* ─── Data-journey bottom sheet (fires on SYNC) ─── */
+    .journey-scrim {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s var(--ease-out);
+      z-index: 90;
+    }
+    .journey-scrim.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .journey-drawer {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      width: 390px;
+      max-width: calc(100vw - 32px);
+      transform: translate(-50%, calc(100% + 40px));
+      background: linear-gradient(180deg, #1a2027 0%, #12161b 100%);
+      border: 1px solid var(--border-subtle);
+      border-radius: 24px;
+      padding: 16px 20px 18px;
+      box-shadow: 0 32px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.06);
+      color: var(--text-white);
+      z-index: 100;
+      transition: transform 0.32s var(--ease-out);
+    }
+    .journey-drawer.show {
+      transform: translate(-50%, 0);
+    }
+    .journey-drawer .j-handle {
+      width: 40px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.14);
+      border-radius: 2px;
+      margin: 0 auto 14px;
+    }
+    .journey-drawer h3 {
+      margin: 0 0 4px;
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .j-sub {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+    .journey {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin-bottom: 14px;
+    }
+    .j-step {
+      display: grid;
+      grid-template-columns: 30px 1fr auto;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px 0;
+      position: relative;
+    }
+    .j-step + .j-step::before {
+      content: "";
+      position: absolute;
+      left: 14px;
+      top: -6px;
+      width: 2px;
+      height: 16px;
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .j-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--surface-2);
+      border: 1px solid var(--border-subtle);
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      transition: background 0.22s var(--ease-out), color 0.22s var(--ease-out), border-color 0.22s var(--ease-out);
+    }
+    .j-step.active .j-icon {
+      background: rgba(43, 136, 216, 0.22);
+      border-color: rgba(43, 136, 216, 0.6);
+      color: #9cc9ec;
+    }
+    .j-step.ok .j-icon {
+      background: rgba(38, 208, 124, 0.18);
+      border-color: rgba(38, 208, 124, 0.55);
+      color: var(--rec-green);
+    }
+    .j-step.warn .j-icon {
+      background: rgba(240, 196, 25, 0.18);
+      border-color: rgba(240, 196, 25, 0.5);
+      color: var(--rec-yellow);
+    }
+    .j-step.err .j-icon {
+      background: rgba(229, 57, 53, 0.18);
+      border-color: rgba(229, 57, 53, 0.55);
+      color: var(--rec-red);
+    }
+    .j-text {
+      min-width: 0;
+    }
+    .j-title {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text-white);
+    }
+    .j-desc {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      line-height: 1.4;
+    }
+    .j-aside {
+      font-size: 10.5px;
+      color: var(--text-dim);
+      font-family: ui-monospace, Menlo, Monaco, monospace;
+      padding-top: 6px;
+    }
+    .j-footer {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .j-fbtn {
+      flex: 1;
+      padding: 10px 12px;
+      border-radius: 999px;
+      background: var(--surface-2);
+      color: var(--text-white);
+      border: 1px solid var(--border-subtle);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      text-align: center;
+      text-decoration: none;
+      transition: background 0.18s var(--ease-out), border-color 0.18s var(--ease-out);
+      cursor: pointer;
+    }
+    .j-fbtn:hover {
+      background: var(--surface-3);
+      border-color: var(--border-active);
+    }
+    .j-fbtn.primary {
+      background: var(--text-white);
+      color: #0d1014;
+      border-color: var(--text-white);
+    }
+    .j-fbtn.primary:hover {
+      background: #e8e8e8;
+    }
+
     /* ─── Intuitive Labeled Bottom Tab Bar ─── */
     .bottom-dock {
       background: #12161b;
@@ -1579,6 +1783,16 @@
   </style>
 </head>
 <body>
+
+  <!-- Corkathon cross-site nav (links to sibling services) -->
+  <nav class="corkathon-nav" aria-label="HealthConnect services">
+    <span class="cork-label">HealthConnect</span>
+    <a class="cork-link current" data-cork-port="4002" data-cork-path="/whoop.html" title="This phone app">WHOOP app</a>
+    <a class="cork-link" data-cork-port="4000" data-cork-path="/" title="Admin console — pipeline + telemetry">Admin</a>
+    <a class="cork-link" data-cork-port="4002" data-cork-path="/operator.html" title="Gateway operator console">Operator</a>
+    <a class="cork-link" data-cork-port="4002" data-cork-path="/" title="Gateway consent phone">Consent</a>
+    <a class="cork-link" data-cork-port="4000" data-cork-path="/#hospital" title="Hospital stored records (via admin)">Hospital</a>
+  </nav>
 
   <!-- Minimalist Patient Switcher -->
   <div class="switcher-bar" role="group" aria-label="Switch patient scenario">
@@ -2216,6 +2430,45 @@
 
   </div>
 
+  <!-- Data-journey bottom sheet (shown after SYNC) -->
+  <div class="journey-scrim" id="jScrim"></div>
+  <div class="journey-drawer" id="jDrawer" role="dialog" aria-label="Data journey" aria-hidden="true">
+    <div class="j-handle"></div>
+    <h3>Data journey</h3>
+    <div class="j-sub" id="jSub">Your biometric data is on its way to the hospital.</div>
+    <div class="journey">
+      <div class="j-step" data-step="app">
+        <div class="j-icon">1</div>
+        <div class="j-text">
+          <div class="j-title">WHOOP app</div>
+          <div class="j-desc" data-desc="app">Preparing consented metrics…</div>
+        </div>
+        <div class="j-aside" data-aside="app"></div>
+      </div>
+      <div class="j-step" data-step="gateway">
+        <div class="j-icon">2</div>
+        <div class="j-text">
+          <div class="j-title">HealthConnect gateway</div>
+          <div class="j-desc" data-desc="gateway">Translate to FHIR + apply consent</div>
+        </div>
+        <div class="j-aside" data-aside="gateway"></div>
+      </div>
+      <div class="j-step" data-step="hospital">
+        <div class="j-icon">3</div>
+        <div class="j-text">
+          <div class="j-title" id="jHospitalTitle">Cork University Hospital</div>
+          <div class="j-desc" data-desc="hospital">Validate + store + flag clinical alerts</div>
+        </div>
+        <div class="j-aside" data-aside="hospital"></div>
+      </div>
+    </div>
+    <div class="j-footer">
+      <a class="j-fbtn" id="jDashboardBtn" href="#" target="_blank" rel="noopener">Dashboard</a>
+      <a class="j-fbtn primary" id="jClinicianBtn" href="#" target="_blank" rel="noopener">Clinician view</a>
+      <button type="button" class="j-fbtn" id="jCloseBtn">Done</button>
+    </div>
+  </div>
+
   <script>
     const METRICS = [
       {
@@ -2818,6 +3071,43 @@
       }
     }
 
+    // ─── Data-journey drawer helpers ───
+    function setJourneyStep(name, cls, desc, aside) {
+      const el = document.querySelector(`.j-step[data-step="${name}"]`);
+      if (!el) return;
+      el.classList.remove("active", "ok", "err", "warn");
+      if (cls) el.classList.add(cls);
+      if (desc != null) el.querySelector(`[data-desc="${name}"]`).textContent = desc;
+      if (aside != null) el.querySelector(`[data-aside="${name}"]`).textContent = aside;
+    }
+    function resetJourney() {
+      for (const name of ["app", "gateway", "hospital"]) {
+        setJourneyStep(name, "", null, "");
+      }
+    }
+    function openJourney(hospitalLabel) {
+      resetJourney();
+      document.getElementById("jHospitalTitle").textContent = hospitalLabel || "Hospital";
+      document.getElementById("jSub").textContent =
+        `Your biometric data is on its way to ${hospitalLabel || "the hospital"}.`;
+      // Wire footer links against the current hostname so LAN works too.
+      const host = window.location.hostname || "localhost";
+      document.getElementById("jDashboardBtn").href = `http://${host}:4000/`;
+      document.getElementById("jClinicianBtn").href = `http://${host}:4000/demo/hospital-integration.html`;
+      document.getElementById("jScrim").classList.add("show");
+      const drawer = document.getElementById("jDrawer");
+      drawer.classList.add("show");
+      drawer.setAttribute("aria-hidden", "false");
+    }
+    function closeJourney() {
+      document.getElementById("jScrim").classList.remove("show");
+      const drawer = document.getElementById("jDrawer");
+      drawer.classList.remove("show");
+      drawer.setAttribute("aria-hidden", "true");
+    }
+    document.getElementById("jCloseBtn").addEventListener("click", closeJourney);
+    document.getElementById("jScrim").addEventListener("click", closeJourney);
+
     async function saveAndSync() {
       const prof = PATIENT_PROFILES[currentPatientId];
       const toastEl = document.getElementById("uiSyncToast");
@@ -2830,40 +3120,106 @@
       }
 
       const allowArray = METRICS.map((m) => m.key).filter((k) => allowedSet.has(k));
+
+      // Private mode: no journey drawer, just acknowledge via the inline toast.
+      if (allowArray.length === 0) {
+        toastEl.className = "sync-toast visible";
+        toastEl.textContent = `Private mode saved · Zero metrics transmitted to ${prof.hospital}.`;
+        return;
+      }
+
       const syncBtn = document.getElementById("btnSyncHospital");
       const prevText = syncBtn.textContent;
-
       syncBtn.textContent = "SYNCING...";
       syncBtn.disabled = true;
+      toastEl.className = "sync-toast";
 
+      openJourney(prof.hospital);
+      const t0 = performance.now();
+
+      // Step 1 — App preparing payload.
+      setJourneyStep("app", "active", `Sending ${allowArray.length} consented metric${allowArray.length === 1 ? "" : "s"}`, "…");
+      await new Promise((r) => setTimeout(r, 300));
+      setJourneyStep(
+        "app",
+        "ok",
+        `Sent ${allowArray.length} consented metric${allowArray.length === 1 ? "" : "s"} (PPSN ${prof.ppsn})`,
+        `${Math.round(performance.now() - t0)}ms`
+      );
+
+      // Step 2 — Gateway handoff.
+      setJourneyStep("gateway", "active", "Translating snapshot → FHIR Bundle", "…");
+      const tGw = performance.now();
+      let res, data;
       try {
-        const res = await fetch(`${GATEWAY_BASE}/sync/${currentPatientId}`, {
+        res = await fetch(`${GATEWAY_BASE}/sync/${currentPatientId}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ consent: { allow: allowArray } }),
         });
-        const data = await res.json();
-
-        toastEl.className = "sync-toast visible";
-        if (allowArray.length === 0) {
-          toastEl.textContent = `Private mode saved · Zero metrics transmitted to ${prof.hospital}.`;
-        } else {
-          const alerts = data?.hospital?.alerts || [];
-          const alertInfo = alerts.length > 0 ? ` · ${alerts.length} cardiology alert(s) flagged` : "";
-          toastEl.textContent = `Synced ${allowArray.length} biometric(s) to ${prof.hospital} (PPSN ${prof.ppsn})${alertInfo}.`;
-        }
-      } catch (_err) {
-        toastEl.className = "sync-toast visible";
-        if (allowArray.length === 0) {
-          toastEl.textContent = `Private mode saved · Zero metrics transmitted to ${prof.hospital}.`;
-        } else {
-          toastEl.textContent = `Synced ${allowArray.length} biometric(s) to ${prof.hospital} (PPSN ${prof.ppsn}).`;
-        }
-      } finally {
+        data = await res.json();
+      } catch (err) {
+        setJourneyStep("gateway", "err", `Could not reach gateway: ${err.message || err}`, "");
         syncBtn.textContent = prevText;
         syncBtn.disabled = false;
+        return;
       }
+
+      if (!data?.bundle) {
+        setJourneyStep("gateway", "err", `Translator failed at ${data?.stage ?? "unknown"}`, "");
+        syncBtn.textContent = prevText;
+        syncBtn.disabled = false;
+        return;
+      }
+
+      const nObs = data.bundle.entry.length;
+      const engine = data.translator === "ai" ? "Claude 4.7" : "rule-based";
+      setJourneyStep(
+        "gateway",
+        data.aiError ? "warn" : "ok",
+        `${nObs} FHIR Observation${nObs === 1 ? "" : "s"} built via ${engine}`,
+        `${Math.round(performance.now() - tGw)}ms`
+      );
+
+      // Step 3 — Hospital receipt.
+      setJourneyStep("hospital", "active", "Posting Bundle to hospital…", "…");
+      await new Promise((r) => setTimeout(r, 220));
+      const h = data.hospital || {};
+      const alerts = h.alerts?.length ?? 0;
+      if (res.ok) {
+        if (alerts > 0) {
+          setJourneyStep(
+            "hospital",
+            "warn",
+            `Stored as ${h.id} · ${alerts} clinical alert${alerts === 1 ? "" : "s"} flagged`,
+            `${Math.round(performance.now() - t0)}ms total`
+          );
+        } else {
+          setJourneyStep(
+            "hospital",
+            "ok",
+            `Stored as ${h.id} · no clinical flags`,
+            `${Math.round(performance.now() - t0)}ms total`
+          );
+        }
+      } else {
+        setJourneyStep("hospital", "err", "Hospital rejected bundle", "");
+      }
+
+      syncBtn.textContent = prevText;
+      syncBtn.disabled = false;
     }
+
+    // Resolve cross-site nav hrefs against the current hostname (so the links
+    // work whether you open on localhost or over a LAN IP). "WHOOP app" stays
+    // marked current for both :4001/ and :4002/whoop.html since both serve
+    // this same UI.
+    (function wireCorkathonNav() {
+      const host = window.location.hostname || "localhost";
+      document.querySelectorAll(".cork-link").forEach((a) => {
+        a.href = `http://${host}:${a.dataset.corkPort}${a.dataset.corkPath}`;
+      });
+    })();
 
     selectPatient("pt-001");
   </script>

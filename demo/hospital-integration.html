@@ -905,12 +905,12 @@ async function syncFromAdmin(){
       if (!o.id || mock.store.Observation.has(o.id)) continue;
       o.subject = { reference: 'Patient/' + PID };
       o.meta = Object.assign({ versionId: '1', lastUpdated: o.effectiveDateTime || new Date().toISOString() }, o.meta || {});
-      o.device = o.device || { display: 'Corkathon admin (hospital)' };
+      o.device = o.device || { display: 'HealthConnect admin (hospital)' };
       mock.store.Observation.set(o.id, o);
       added++;
     }
     if (added > 0){
-      await loadObs('Corkathon admin → LVUH EHR');
+      await loadObs('HealthConnect admin → LVUH EHR');
       render();
     }
   } catch { /* admin not reachable; silently ignore */ }

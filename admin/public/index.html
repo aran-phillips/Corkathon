@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Corkathon — Admin Console</title>
+    <title>HealthConnect — Admin Console</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#14181F" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -18,7 +18,7 @@
       <!-- ─── Sidebar ─────────────────────────────────── -->
       <aside class="sidebar">
         <div class="side-brand">
-          <span class="side-mark">Corkathon</span>
+          <span class="side-mark">HealthConnect</span>
           <span class="side-sub">Admin console</span>
         </div>
 
@@ -67,6 +67,18 @@
         </nav>
 
         <div class="side-footer">
+          <div class="side-group">Open app</div>
+          <a class="side-applink" href="http://localhost:4002/whoop.html" target="_blank" rel="noopener" data-applink="whoop">
+            <span class="side-applink-mark">W</span>
+            <span class="side-applink-name">WHOOP phone</span>
+            <span class="side-applink-ext" aria-hidden="true">↗</span>
+          </a>
+          <a class="side-applink" href="http://localhost:4002/operator.html" target="_blank" rel="noopener" data-applink="operator">
+            <span class="side-applink-mark">G</span>
+            <span class="side-applink-name">Gateway operator</span>
+            <span class="side-applink-ext" aria-hidden="true">↗</span>
+          </a>
+
           <div class="side-group">Services</div>
           <div class="side-service">
             <span class="dot" data-health="whoop"></span>
@@ -504,6 +516,20 @@
       </main>
     </div>
 
+    <script>
+      // Rewrite external applink hrefs to use the current hostname (so links
+      // work on localhost or over a LAN IP).
+      (function () {
+        const host = window.location.hostname || "localhost";
+        document.querySelectorAll(".side-applink").forEach((a) => {
+          try {
+            const u = new URL(a.href);
+            u.hostname = host;
+            a.href = u.toString();
+          } catch (_e) { /* leave as-is */ }
+        });
+      })();
+    </script>
     <script src="/app.js" type="module"></script>
   </body>
 </html>

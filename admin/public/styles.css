@@ -205,6 +205,41 @@ body[data-section="telemetry"] .side-item[data-nav="telemetry"] {
   font-size: 13px;
   color: var(--side-muted);
 }
+.side-applink {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  font-size: 13px;
+  color: var(--side-text);
+  text-decoration: none;
+  border-radius: 6px;
+  transition: background 0.15s ease;
+}
+.side-applink:hover {
+  background: var(--side-elev);
+}
+.side-applink-mark {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--side-elev);
+  border: 1px solid var(--side-border);
+  color: var(--side-text);
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+}
+.side-applink-name {
+  flex: 1;
+  font-weight: 500;
+}
+.side-applink-ext {
+  color: var(--side-subtle);
+  font-size: 12px;
+}
 .side-service-name {
   color: var(--side-text);
   font-weight: 500;
@@ -1319,9 +1354,10 @@ code.verb-post {
   :root { --sidebar-w: 72px; }
   .side-brand { padding: 4px 10px 16px; text-align: center; }
   .side-mark { font-size: 16px; }
-  .side-sub, .side-group, .side-service-name, .side-service-port, .side-ai-lbl, .side-ai-val { display: none; }
+  .side-sub, .side-group, .side-service-name, .side-service-port, .side-ai-lbl, .side-ai-val, .side-applink-name, .side-applink-ext { display: none; }
   .side-item { justify-content: center; padding: 10px; font-size: 0; }
   .side-icon { opacity: 1; }
   .side-service { justify-content: center; padding: 6px; }
+  .side-applink { justify-content: center; padding: 6px; }
   .compat-summary { grid-template-columns: 1fr; }
 }
