@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WatchLink inside the hospital EHR: integration demo</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#c3cdd8;font:12px/1.35 "Segoe UI",Tahoma,Arial,sans-serif;color:#1d2733;padding-bottom:60px}
+button{font:inherit;cursor:pointer}
+select,input{font:inherit}
+body:not(.dcmin) .win{margin-right:330px}
+.win{position:relative;margin:12px;border:1px solid #7f91a6;background:#f4f6f9;box-shadow:0 4px 18px rgba(0,0,0,.18);min-width:1120px}
+.tb1{display:flex;align-items:center;gap:14px;background:#46607d;color:#fff;padding:4px 10px;font-size:12px}
+.tb1 .brand{font-weight:600;letter-spacing:.03em}
+.tb1 .sp{flex:1}
+.tb1 .dim{opacity:.8}
+.tb2{display:flex;align-items:center;gap:2px;background:#eef2f6;border-bottom:1px solid #b6c2cf;padding:3px 6px;position:relative}
+.tbtn{border:1px solid transparent;background:none;padding:3px 8px;color:#1d2733;border-radius:2px;position:relative}
+.tbtn:hover{border-color:#9fb3c8;background:#fff}
+.tbtn .bdg{display:none;background:#c62828;color:#fff;border-radius:8px;padding:0 5px;font-size:10px;margin-left:4px}
+.tbtn.has .bdg{display:inline}
+.tbsep{width:1px;height:16px;background:#b6c2cf;margin:0 4px}
+.tb2 .sp{flex:1}
+.ntoast{display:none;position:absolute;right:10px;top:30px;z-index:20;background:#fff8d6;border:1px solid #d9c56a;padding:6px 10px;box-shadow:0 2px 6px rgba(0,0,0,.15);cursor:pointer}
+.ntoast.show{display:block}
+.ptabs{display:flex;gap:2px;background:#dbe3ec;padding:4px 6px 0}
+.ptab{padding:4px 12px;background:#c9d4e0;border:1px solid #aebccb;border-bottom:0}
+.ptab.on{background:#fff;border-top:2px solid #46607d;font-weight:600}
+.ph{display:grid;grid-template-columns:230px repeat(4,minmax(0,1fr));gap:4px 18px;background:#fff;border-bottom:2px solid #46607d;padding:6px 10px}
+.ph .nm{font-size:16px;font-weight:600;color:#1f3b5c}
+.ph .l{color:#5b6b7d}
+.ph .al{color:#b3261e;font-weight:600}
+.wrap{display:grid;grid-template-columns:170px minmax(0,1fr);min-height:620px}
+.side{background:#e6ecf2;border-right:1px solid #b6c2cf;padding:6px 0}
+.side .grp{padding:8px 10px 3px;color:#5b6b7d;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+.act{display:block;width:100%;text-align:left;border:0;background:none;padding:5px 10px 5px 13px;color:#1d2733;position:relative}
+.act:hover{background:#f4f7fa}
+.act.on{background:#fff;border-left:3px solid #46607d;padding-left:10px;font-weight:600}
+.act .tag{font-size:9.5px;background:#d7efe9;color:#0b6157;border-radius:2px;padding:0 4px;margin-left:4px;font-weight:600}
+.main{background:#fff;min-width:0}
+.ah{display:flex;align-items:center;gap:10px;background:#f0f4f8;border-bottom:1px solid #cfd8e2;padding:5px 10px}
+.ah h2{margin:0;font-size:14px;color:#2c4a6b}
+.ah .sp{flex:1}
+.btn{border:1px solid #9fb3c8;background:#fff;padding:2px 9px;border-radius:2px}
+.btn:hover{background:#eef3f8}
+.btn.pri{background:#46607d;color:#fff;border-color:#3b536e}
+.ac{padding:10px}
+.pn{border:1px solid #cfd8e2;margin-bottom:10px}
+.pn h3{margin:0;padding:4px 8px;background:#e6ecf2;font-size:12px;color:#2c4a6b;border-bottom:1px solid #cfd8e2}
+.pn .b{padding:6px 8px}
+.cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+table.nt{width:100%;border-collapse:collapse}
+table.nt th{background:#e6ecf2;text-align:left;font-weight:600;padding:3px 6px;border:1px solid #cfd8e2;white-space:nowrap}
+table.nt td{padding:3px 6px;border:1px solid #e1e7ee;vertical-align:top}
+table.nt tr.sel td{background:#e8f1fb}
+.muted{color:#7a8797}
+.abn{color:#b3261e;font-weight:600}
+/* flowsheet */
+.fsw{display:grid;grid-template-columns:190px minmax(0,1fr);gap:10px}
+.fsl .it{padding:3px 6px;border:1px solid transparent}
+.fsl .it.on{background:#e8f1fb;border-color:#b9cfe6}
+.fsg{overflow-x:auto;border:1px solid #cfd8e2}
+table.fs{border-collapse:collapse;min-width:100%}
+table.fs th,table.fs td{border:1px solid #e1e7ee;padding:3px 7px;white-space:nowrap;text-align:center}
+table.fs th{background:#e6ecf2;font-weight:600}
+table.fs td.rl{text-align:left;min-width:230px}
+table.fs tr.gh td{background:#d6e2ee;text-align:left;font-weight:600;color:#1f3b5c}
+table.fs td.c{cursor:pointer}
+table.fs td.c:hover{background:#f2f7fc}
+table.fs td.c.sel{outline:2px solid #2f6db3;outline-offset:-2px}
+.fsinfo{margin-top:6px;padding:5px 8px;background:#f6f8fa;border:1px solid #e1e7ee;min-height:26px}
+/* integration point markers */
+.ipm{position:relative}
+body.ip .ipm{outline:2px dashed #e0861a;outline-offset:2px}
+body.ip .ipm::after{content:attr(data-ip);position:absolute;top:-10px;right:-10px;background:#e0861a;color:#fff;border-radius:50%;width:19px;height:19px;font:600 11px/19px "Segoe UI",sans-serif;text-align:center;z-index:6}
+/* modal */
+.ov{display:none;position:absolute;inset:0;background:rgba(30,45,65,.35);z-index:30;align-items:flex-start;justify-content:center;padding-top:120px}
+.ov.show{display:flex}
+.dlg{width:560px;background:#f4f6f9;border:1px solid #7f91a6;box-shadow:0 8px 30px rgba(0,0,0,.3)}
+.dlg .t{background:#46607d;color:#fff;padding:5px 10px;font-weight:600;display:flex}
+.dlg .t .sp{flex:1}
+.dlg .bd{padding:10px;background:#fff}
+.card{border:1px solid #cfd8e2;border-left:4px solid #999;padding:6px 8px;margin-bottom:6px}
+.card.critical{border-left-color:#c62828}.card.warning{border-left-color:#d9822b}.card.info{border-left-color:#2f6db3}
+.card b{display:block}
+.dlg .ft{display:flex;gap:6px;align-items:center;padding:8px 10px;border-top:1px solid #cfd8e2}
+.dlg .ft .sp{flex:1}
+/* inbox */
+.ib{display:none;position:absolute;left:150px;top:28px;width:760px;z-index:25;background:#fff;border:1px solid #7f91a6;box-shadow:0 6px 24px rgba(0,0,0,.25)}
+.ib.show{display:block}
+.ib .t{background:#e6ecf2;padding:5px 8px;font-weight:600;color:#2c4a6b;display:flex;border-bottom:1px solid #cfd8e2}
+.ib .t .sp{flex:1}
+.ibb{display:grid;grid-template-columns:330px minmax(0,1fr);min-height:220px}
+.ibl{border-right:1px solid #cfd8e2}
+.ibm{padding:5px 8px;border-bottom:1px solid #e1e7ee;cursor:pointer}
+.ibm.on{background:#e8f1fb}
+.ibm.unread{font-weight:600}
+.ibd{padding:8px 10px;white-space:pre-wrap}
+.stat{display:flex;gap:18px;background:#e6ecf2;border-top:1px solid #b6c2cf;padding:3px 10px;color:#4a5a6c;font-size:11px}
+/* embedded SMART app (WatchLink's own UI) */
+.smart{margin:10px;border:1px solid #9fb3c8}
+.smart-bar{display:flex;gap:10px;background:#f7f9fb;border-bottom:1px solid #cfd8e2;padding:4px 8px;font-size:11px;color:#5b6b7d}
+.smart-bar .sp{flex:1}
+.app{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:13px;padding:14px 16px;background:#fbfdfd;color:#18212f}
+.apph{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.logo{width:30px;height:30px;border-radius:8px;background:#0e8a7d;color:#fff;display:grid;place-items:center;font-weight:700}
+.apph b{font-size:15px;display:block}
+.apph span{color:#6b7787;font-size:12px}
+.apph .sp{flex:1}
+.abtn{border:1px solid #0e8a7d;background:#0e8a7d;color:#fff;border-radius:6px;padding:5px 12px;font-size:12.5px}
+.abtn.sec{background:#fff;color:#0e8a7d}
+.disc{font-size:12px;color:#4a5568;background:#eef3f4;border-radius:6px;padding:7px 10px;margin-bottom:10px}
+.alerts{display:grid;gap:7px;margin-bottom:12px}
+.alert{display:flex;gap:10px;align-items:flex-start;padding:8px 11px;border-radius:7px;border:1px solid}
+.alert.danger{background:#fdecea;border-color:#f3c3be}.alert.warn{background:#fff4dd;border-color:#f2dcae}.alert.info{background:#e7f0fb;border-color:#c8dcf5}
+.alert .ic{font-weight:700;width:16px;text-align:center}
+.alert.danger .ic{color:#c0362c}.alert.warn .ic{color:#a86400}.alert.info .ic{color:#2463b5}
+.alert .tx{flex:1}.alert .tx small{display:block;color:#4a5568;font-size:11.5px}
+.alert.acked{opacity:.5}
+.alert .btn.sm{font-size:11.5px;padding:2px 8px;border-radius:5px}
+.charts{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.ch{border:1px solid #dde3ea;border-radius:8px;padding:9px 11px;background:#fff}
+.ch .hd{display:flex;justify-content:space-between;align-items:baseline}
+.ch .lb{font-size:12.5px;font-weight:600}
+.ch .cd{font:10.5px ui-monospace,Consolas,monospace;color:#8590a2}
+.ch .v{font-size:20px;font-weight:600}
+.ch .v small{font-size:12px;font-weight:400;color:#4a5568;margin-left:3px}
+.ch .sub{font-size:11.5px;color:#8590a2}
+.ch svg{display:block;width:100%;height:auto;margin-top:4px}
+.sec{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:#4a5568;font-weight:600;margin:16px 0 7px}
+.empty{color:#7a8797;padding:8px 0}
+/* demo controls (not part of hospital) */
+.dc{position:fixed;right:16px;bottom:16px;width:300px;background:#fff;border:2px solid #e0861a;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.25);z-index:50;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:12.5px}
+.dc .h{display:flex;align-items:center;padding:8px 12px;background:#fff4e5;border-radius:8px 8px 0 0;font-weight:600;color:#8a4b00}
+.dc .h .sp{flex:1}
+.dc .h button{border:0;background:none;color:#8a4b00}
+.dc .b{padding:10px 12px;display:grid;gap:8px}
+.dc.min .b{display:none}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);background:#f0f3f6;border-radius:7px;padding:3px}
+.seg button{border:0;background:none;padding:5px 2px;border-radius:5px;font-size:12px}
+.seg button.on{background:#fff;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.1)}
+.go{border:0;border-radius:7px;background:#0e8a7d;color:#fff;font-weight:600;padding:8px}
+.go:disabled{opacity:.5}
+.dc label{display:flex;gap:6px;align-items:center}
+.dc .row{display:flex;justify-content:space-between;align-items:center}
+.dc .st{font-size:12px;color:#1b7f4b;min-height:16px}
+.legend{display:none;font-size:11.5px;color:#4a5568;border-top:1px solid #eee;padding-top:8px}
+body.ip .legend{display:block}
+.legend div{display:flex;gap:6px;margin:3px 0}
+.legend i{flex:none;font-style:normal;background:#e0861a;color:#fff;border-radius:50%;width:17px;height:17px;text-align:center;font-size:10.5px;line-height:17px;font-weight:600}
+/* traffic drawer */
+.drawer{display:none;position:fixed;left:0;right:0;bottom:0;height:260px;background:#0f1b2b;color:#cfe3ff;z-index:40;border-top:2px solid #e0861a}
+.drawer.show{display:flex;flex-direction:column}
+.drawer .h{display:flex;gap:10px;padding:6px 14px;border-bottom:1px solid #22344b;font:12px system-ui,sans-serif}
+.drawer .h b{color:#fff}.drawer .h .sp{flex:1}
+.drawer .h button{background:#1c2c42;color:#cfe3ff;border:1px solid #2c4262;border-radius:5px;font-size:11.5px;padding:1px 8px}
+#log{flex:1;overflow:auto;font:11.5px ui-monospace,Consolas,monospace;padding-right:320px}
+.lrow{display:grid;grid-template-columns:66px 190px 62px minmax(0,1fr) 46px 58px;gap:10px;padding:4px 14px;border-bottom:1px solid #18283d;cursor:pointer}
+.lrow:hover{background:#15243a}
+.lrow .t{color:#6f86a6}.lrow .a{color:#9fb6d6}.lrow .p{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lrow .ms{color:#6f86a6;text-align:right}
+.m.GET{color:#7dd3fc}.m.POST{color:#86efac}.m.QUERY{color:#c4b5fd}.m.ROUTE{color:#f9a8d4}.m.LAUNCH{color:#fcd34d}
+.s2{color:#86efac}.s4{color:#fca5a5}.s0{color:#9fb6d6}
+.ldet{display:none;padding:0 14px 8px}.ldet.open{display:block}
+.ldet h4{margin:6px 0 3px;font:500 11px system-ui,sans-serif;color:#9fb6d6;text-transform:uppercase}
+.ldet pre{margin:0;max-height:180px;overflow:auto;background:#0a1421;padding:7px;border-radius:5px;white-space:pre}
+.lempty{padding:12px 14px;color:#6f86a6}
+</style>
+</head>
+<body>
+
+<div class="win" id="win">
+  <div class="tb1"><span class="brand">LVUH Clinical Workspace</span><span class="dim">Lee Valley University Hospital · Cardiology OPD</span><span class="sp"></span><span class="dim">BYRNE, AOIFE (Consultant)</span></div>
+  <div class="tb2">
+    <button class="tbtn">Patient Lists</button><button class="tbtn">Schedule</button>
+    <button class="tbtn ipm" data-ip="2" id="ibBtn">In Basket<span class="bdg" id="ibN">0</span></button>
+    <button class="tbtn">Chart Search</button><span class="tbsep"></span>
+    <button class="tbtn">Reports</button><button class="tbtn">Secure Chat</button><button class="tbtn">Drug Reference</button>
+    <span class="sp"></span><button class="tbtn">Print</button><button class="tbtn">Log Out</button>
+    <div class="ntoast" id="ntoast">New In Basket message: <b>Patient-generated data</b></div>
+    <div class="ib" id="ib">
+      <div class="t">In Basket · Results / Patient Data<span class="sp"></span><button class="btn" id="ibClose">Close</button></div>
+      <div class="ibb"><div class="ibl" id="ibList"></div><div class="ibd" id="ibDet"><span class="muted">Select a message.</span></div></div>
+    </div>
+  </div>
+  <div class="ptabs"><div class="ptab">Schedule</div><div class="ptab on">Murphy, Jane ✕</div></div>
+  <div class="ph">
+    <div><div class="nm">Murphy, Jane</div><div>58 y.o. Female · DOB 14/03/1968</div><div>PPSN 1234567TW</div><div>IHI 123456789012345678</div></div>
+    <div><span class="l">Consultant:</span> Byrne, Aoife<br><span class="l">Location:</span> Cardiology OPD<br><span class="l">Visit:</span> Review 21/11/2026</div>
+    <div><span class="l">Allergies:</span> <span class="al">Penicillin</span><br><span class="l">Code:</span> Full<br><span class="l">Isolation:</span> None</div>
+    <div><span class="l">Weight:</span> 71.2 kg (12/10)<br><span class="l">BMI:</span> 26.1<br><span class="l">GP:</span> Dr. P. O'Sullivan</div>
+    <div><span class="l">Problems:</span> PAF, HTN, T2DM<br><span class="l">Anticoag:</span> Apixaban<br><span class="l">Lang:</span> English</div>
+  </div>
+  <div class="wrap">
+    <nav class="side" id="side">
+      <div class="grp">Chart</div>
+      <button class="act on" data-act="summary">Summary</button>
+      <button class="act" data-act="results">Results Review</button>
+      <button class="act" data-act="flow">Flowsheets</button>
+      <button class="act ipm" data-ip="5" data-act="notes">Notes</button>
+      <button class="act" data-act="meds">Medications</button>
+      <button class="act" data-act="problems">Problem List</button>
+      <button class="act" data-act="orders">Orders</button>
+      <div class="grp">Apps</div>
+      <button class="act ipm" data-ip="4" data-act="watchlink">WatchLink<span class="tag">SMART</span></button>
+    </nav>
+    <main class="main"><div class="ah"><h2 id="actTitle">Summary</h2><span class="sp"></span><button class="btn" id="refresh">Refresh</button></div><div id="actBody"></div></main>
+  </div>
+  <div class="stat"><span>Ready</span><span>Environment: LVUH-PROD</span><span id="statIf">Interface WATCHLINK (FHIR R4): active · no messages today</span><span style="flex:1"></span><span id="clock"></span></div>
+  <div class="ov" id="ov"><div class="dlg ipm" data-ip="3" id="dlg"></div></div>
+</div>
+
+<div class="dc" id="dc">
+  <div class="h">Demo controls<span style="font-weight:400;margin-left:6px">(not part of hospital system)</span><span class="sp"></span><button id="dcMin">–</button></div>
+  <div class="b">
+    <div>Patient's watch</div>
+    <div class="seg" id="srcSeg"><button data-src="whoop" class="on">WHOOP</button><button data-src="oura">Oura</button><button data-src="apple">Apple</button></div>
+    <div class="row"><span>Days shared</span><select id="days"><option>7</option><option selected>14</option><option>30</option></select></div>
+    <button class="go" id="shareBtn">Simulate patient sharing data</button>
+    <div class="st" id="shareSt"></div>
+    <label><input type="checkbox" id="ipChk"> Show integration points</label>
+    <label><input type="checkbox" id="logChk"> Show API traffic</label>
+    <button class="btn" id="resetBtn">Reset demo</button>
+    <div class="legend">
+      <div><i>1</i><span><b>FHIR Observation</b>: values filed into existing flowsheet rows (a mapping set up by the hospital, no screen change)</span></div>
+      <div><i>2</i><span><b>FHIR Communication</b>: routed to the clinician's In Basket</span></div>
+      <div><i>3</i><span><b>CDS Hooks</b> (patient-view): shown in the EHR's own advisory pop-up</span></div>
+      <div><i>4</i><span><b>SMART on FHIR app</b>: opens as an activity using the EHR's login and patient context</span></div>
+      <div><i>5</i><span><b>FHIR DocumentReference</b>: summary filed back as a note</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="drawer" id="drawer"><div class="h"><b>API traffic</b><span>All calls between WatchLink and the hospital system. Click a row for the payload.</span><span class="sp"></span><button id="clearLog">Clear</button></div><div id="log"><div class="lempty">No traffic yet.</div></div></div>
+
+<script>
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const r1 = v => Math.round(v * 10) / 10;
+const r0 = v => Math.round(v);
+const ymd = d => { const x = new Date(d); return x.getFullYear() + '-' + String(x.getMonth()+1).padStart(2,'0') + '-' + String(x.getDate()).padStart(2,'0'); };
+const fmtDay = d => new Date(d).toLocaleDateString('en-IE', {day:'numeric', month:'short'});
+const fmtTime = d => new Date(d).toLocaleTimeString('en-IE', {hour:'2-digit', minute:'2-digit'});
+const fmtDT = d => fmtDay(d) + ' ' + fmtTime(d);
+function rng(seed){ return function(){ seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+let uuidN = 0;
+function uuid(r){ const h = () => Math.floor(r()*16).toString(16); let s=''; for (let i=0;i<32;i++) s+=h(); uuidN++; return `${s.slice(0,8)}-${s.slice(8,12)}-4${s.slice(13,16)}-a${s.slice(17,20)}-${s.slice(20,32)}`; }
+
+const LOINC = 'http://loinc.org', UCUM = 'http://unitsofmeasure.org';
+const LOCAL = 'https://watchlink.example/fhir/CodeSystem/wearable-metric';
+const PPSN_SYS = 'urn:example:ie:ppsn', PPSN = '1234567TW';
+const IHI_SYS = 'urn:example:ie:ihi', IHI = '123456789012345678';
+const PT_IDS = [{ system: IHI_SYS, value: IHI }, { system: PPSN_SYS, value: PPSN }];
+
+/* ---------- the patient's story (same physiology, three vendor formats) ---------- */
+function story(n, seed){
+  const r = rng(seed), out = [];
+  const today = new Date(); today.setHours(0,0,0,0);
+  for (let i = 0; i < n; i++){
+    const date = new Date(today); date.setDate(today.getDate() - (n - 1 - i));
+    const late = Math.max(0, i - (n - 5));            // last 4 days drift
+    const wake = new Date(date); wake.setHours(7, Math.floor(r()*40), 0, 0);
+    const sleepH = late ? 5.2 + (r()-.5)*.6 : 7.2 + (r()-.5)*1.0;
+    const awakeMin = 20 + r()*25;
+    const bed = new Date(wake.getTime() - (sleepH*60 + awakeMin) * 60000);
+    out.push({
+      i, date, wake, bed, sleepH, awakeMin, late,
+      rhr: 58 + (r()-.5)*3 + late*3,
+      rmssd: 64 + (r()-.5)*8 - late*7,
+      spo2: i === n - 2 ? 90.8 : 96.3 + (r()-.5)*1.4,
+      resp: 14.4 + (r()-.5)*1 + late*.6,
+      steps: late ? 2800 + r()*1500 : 6500 + r()*4000,
+      skin: 33.6 + (r()-.5)*.4 + late*.15,
+    });
+  }
+  return out;
+}
+
+function mkObs({system = LOINC, code, display, cat = 'vital-signs', when, period, value, unit, ucum, device, note}){
+  const o = {
+    resourceType: 'Observation', status: 'final',
+    meta: { tag: [{ system: 'https://watchlink.example/fhir/tags', code: 'patient-generated', display: 'Patient-generated health data' }] },
+    category: [{ coding: [{ system: 'http://terminology.hl7.org/CodeSystem/observation-category', code: cat }] }],
+    code: { coding: [{ system, code, display }], text: display },
+    subject: { reference: 'urn:uuid:patient' },
+  };
+  if (period) o.effectivePeriod = period; else o.effectiveDateTime = when;
+  if (value !== undefined) o.valueQuantity = { value, unit, system: UCUM, code: ucum };
+  o.device = { reference: 'urn:uuid:device', display: device };
+  if (note) o.note = [{ text: note }];
+  return o;
+}
+const iso = d => new Date(d).toISOString();
+
+function Report(){ const m = new Map(); return {
+  add(field, status, target, n = 1){ const k = field + status; const e = m.get(k) || { field, status, target, n: 0 }; e.n += n; m.set(k, e); },
+  list(){ return [...m.values()]; } }; }
+
+/* ---------- vendor formats + converters ---------- */
+const SOURCES = {
+  whoop: {
+    name: 'WHOOP', device: 'WHOOP 4.0', sub: 'Connected via OAuth · synced 6 min ago', link: 'OAuth · REST',
+    deviceRes: { manufacturer: 'WHOOP Inc.', model: 'WHOOP 4.0' },
+    gen(n){
+      const st = story(n, 7), r = rng(11);
+      const unscorable = Math.min(4, n - 3);
+      const recoveries = st.map((s, i) => {
+        const base = { cycle_id: 93800 + i, sleep_id: uuid(r), user_id: 10129, created_at: iso(s.wake), updated_at: iso(s.wake) };
+        if (i === unscorable) return { ...base, score_state: 'UNSCORABLE' };
+        return { ...base, score_state: 'SCORED', score: {
+          user_calibrating: false,
+          recovery_score: r0(Math.max(1, Math.min(99, 100 - (s.rhr - 56) * 4 + (s.rmssd - 60) * .8))),
+          resting_heart_rate: r0(s.rhr), hrv_rmssd_milli: r1(s.rmssd),
+          spo2_percentage: r1(s.spo2), skin_temp_celsius: r1(s.skin) } };
+      });
+      const sleeps = st.map((s, i) => {
+        const sleepMs = Math.round(s.sleepH * 3.6e6), awake = Math.round(s.awakeMin * 6e4);
+        return { id: recoveries[i].sleep_id, cycle_id: 93800 + i, user_id: 10129, start: iso(s.bed), end: iso(s.wake),
+          timezone_offset: '+00:00', nap: false, score_state: 'SCORED', score: {
+            stage_summary: { total_in_bed_time_milli: sleepMs + awake, total_awake_time_milli: awake, total_no_data_time_milli: 0,
+              total_light_sleep_time_milli: Math.round(sleepMs*.52), total_slow_wave_sleep_time_milli: Math.round(sleepMs*.22),
+              total_rem_sleep_time_milli: Math.round(sleepMs*.26), sleep_cycle_count: s.late ? 3 : 4, disturbance_count: 8 + Math.floor(r()*8) + s.late*3 },
+            respiratory_rate: r1(s.resp), sleep_performance_percentage: r0(Math.min(100, s.sleepH / 7.8 * 100)),
+            sleep_consistency_percentage: r0(70 + r()*25), sleep_efficiency_percentage: r1(s.sleepH*60 / (s.sleepH*60 + s.awakeMin) * 100) } };
+      });
+      const start = iso(st[0].bed);
+      return [
+        { method: 'GET', host: 'api.prod.whoop.com', path: `/developer/v2/recovery?start=${start}&limit=25`, json: { records: recoveries, next_token: null } },
+        { method: 'GET', host: 'api.prod.whoop.com', path: `/developer/v2/activity/sleep?start=${start}&limit=25`, json: { records: sleeps, next_token: null } },
+      ];
+    },
+    convert(eps){
+      const rep = Report(), obs = [], dev = this.device;
+      for (const rec of eps[0].json.records){
+        if (rec.score_state !== 'SCORED'){ rep.add(`recovery (${rec.score_state})`, 'skipped', 'strap not worn / no score'); continue; }
+        const s = rec.score, when = rec.created_at;
+        obs.push(mkObs({ code: '40443-4', display: 'Heart rate --resting', when, value: s.resting_heart_rate, unit: 'beats/minute', ucum: '/min', device: dev }));
+        rep.add('score.resting_heart_rate', 'mapped', 'LOINC 40443-4');
+        obs.push(mkObs({ system: LOCAL, code: 'hrv-rmssd', display: 'Heart rate variability (RMSSD)', when, value: s.hrv_rmssd_milli, unit: 'ms', ucum: 'ms', device: dev, note: 'RMSSD during sleep. Local code: no verified LOINC code mapped yet.' }));
+        rep.add('score.hrv_rmssd_milli', 'mapped', 'local code hrv-rmssd');
+        if (s.spo2_percentage != null){ obs.push(mkObs({ code: '59408-5', display: 'Oxygen saturation by Pulse oximetry', when, value: s.spo2_percentage, unit: '%', ucum: '%', device: dev })); rep.add('score.spo2_percentage', 'mapped', 'LOINC 59408-5'); }
+        if (s.skin_temp_celsius != null){ obs.push(mkObs({ system: LOCAL, code: 'skin-temp', display: 'Skin temperature (wrist, sleep)', when, value: s.skin_temp_celsius, unit: '°C', ucum: 'Cel', device: dev })); rep.add('score.skin_temp_celsius', 'mapped', 'local code skin-temp'); }
+        rep.add('score.recovery_score', 'dropped', 'proprietary score, no clinical code');
+      }
+      for (const sl of eps[1].json.records){
+        if (sl.score_state !== 'SCORED') continue;
+        const ss = sl.score.stage_summary;
+        obs.push(mkObs({ code: '93832-4', display: 'Sleep duration', cat: 'activity', period: { start: sl.start, end: sl.end }, value: r1((ss.total_in_bed_time_milli - ss.total_awake_time_milli) / 3.6e6), unit: 'h', ucum: 'h', device: dev }));
+        rep.add('stage_summary (in bed − awake)', 'mapped', 'LOINC 93832-4, ms → h');
+        obs.push(mkObs({ code: '9279-1', display: 'Respiratory rate', when: sl.end, value: sl.score.respiratory_rate, unit: 'breaths/minute', ucum: '/min', device: dev, note: 'Average during sleep' }));
+        rep.add('score.respiratory_rate', 'mapped', 'LOINC 9279-1');
+        rep.add('sleep_performance / consistency %', 'dropped', 'proprietary score');
+      }
+      return { obs, report: rep.list() };
+    }
+  },
+
+  oura: {
+    name: 'Oura', device: 'Oura Ring Gen 3', sub: 'Connected via OAuth · synced 22 min ago', link: 'OAuth · REST',
+    deviceRes: { manufacturer: 'Oura Health Oy', model: 'Oura Ring Gen 3' },
+    gen(n){
+      const st = story(n, 21), r = rng(5), H = 'api.ouraring.com';
+      const sleep = st.map(s => ({ id: uuid(r), day: ymd(s.date), type: 'long_sleep', bedtime_start: iso(s.bed), bedtime_end: iso(s.wake),
+        total_sleep_duration: r0(s.sleepH * 3600), lowest_heart_rate: r0(s.rhr - 2), average_heart_rate: r0(s.rhr + 4),
+        average_hrv: r0(s.rmssd * .9), average_breath: r1(s.resp) }));
+      const spo2 = st.map(s => ({ id: uuid(r), day: ymd(s.date), spo2_percentage: { average: r1(s.spo2) }, breathing_disturbance_index: r0(5 + r()*6 + s.late*4) }));
+      const activity = st.map(s => ({ id: uuid(r), day: ymd(s.date), score: r0(60 + r()*30 - s.late*8), steps: r0(s.steps), active_calories: r0(s.steps * .045) }));
+      const readiness = st.map(s => ({ id: uuid(r), day: ymd(s.date), score: r0(85 - s.late*9 + (r()-.5)*8), temperature_deviation: r1((r()-.5)*.4 + s.late*.15),
+        contributors: { activity_balance: r0(70+r()*25), hrv_balance: r0(80 - s.late*12), resting_heart_rate: r0(88 - s.late*14), sleep_balance: r0(80 - s.late*10), recovery_index: r0(75+r()*20) } }));
+      const hr = [];
+      for (const s of st.slice(-2)){
+        const t0 = new Date(s.date);
+        for (let k = 0; k < 288; k++){
+          const t = new Date(t0.getTime() + k * 300000), h = t.getHours();
+          const asleep = h < 7, base = asleep ? s.rhr + 2 : s.rhr + 18 + Math.sin(k/11)*8;
+          hr.push({ bpm: r0(base + (r()-.5)*8 + (h === 14 && s.i === st.length-1 ? 35 : 0)), source: asleep ? 'rest' : 'awake', timestamp: iso(t) });
+        }
+      }
+      const sd = ymd(st[0].date), ed = ymd(st[st.length-1].date);
+      return [
+        { method: 'GET', host: H, path: `/v2/usercollection/sleep?start_date=${sd}&end_date=${ed}`, json: { data: sleep, next_token: null } },
+        { method: 'GET', host: H, path: `/v2/usercollection/daily_spo2?start_date=${sd}&end_date=${ed}`, json: { data: spo2, next_token: null } },
+        { method: 'GET', host: H, path: `/v2/usercollection/daily_activity?start_date=${sd}&end_date=${ed}`, json: { data: activity, next_token: null } },
+        { method: 'GET', host: H, path: `/v2/usercollection/daily_readiness?start_date=${sd}&end_date=${ed}`, json: { data: readiness, next_token: null } },
+        { method: 'GET', host: H, path: `/v2/usercollection/heartrate?start_datetime=${iso(st[st.length-2].date)}`, json: { data: hr, next_token: null } },
+      ];
+    },
+    convert(eps){
+      const rep = Report(), obs = [], dev = this.device;
+      for (const s of eps[0].json.data){
+        const when = s.bedtime_end;
+        obs.push(mkObs({ code: '40443-4', display: 'Heart rate --resting', when, value: s.lowest_heart_rate, unit: 'beats/minute', ucum: '/min', device: dev, note: 'Lowest heart rate during sleep' }));
+        rep.add('sleep.lowest_heart_rate', 'mapped', 'LOINC 40443-4');
+        obs.push(mkObs({ system: LOCAL, code: 'hrv-rmssd', display: 'Heart rate variability (RMSSD)', when, value: s.average_hrv, unit: 'ms', ucum: 'ms', device: dev, note: 'Average RMSSD during sleep. Local code: no verified LOINC code mapped yet.' }));
+        rep.add('sleep.average_hrv', 'mapped', 'local code hrv-rmssd');
+        obs.push(mkObs({ code: '9279-1', display: 'Respiratory rate', when, value: s.average_breath, unit: 'breaths/minute', ucum: '/min', device: dev, note: 'Average during sleep' }));
+        rep.add('sleep.average_breath', 'mapped', 'LOINC 9279-1');
+        obs.push(mkObs({ code: '93832-4', display: 'Sleep duration', cat: 'activity', period: { start: s.bedtime_start, end: s.bedtime_end }, value: r1(s.total_sleep_duration / 3600), unit: 'h', ucum: 'h', device: dev }));
+        rep.add('sleep.total_sleep_duration', 'mapped', 'LOINC 93832-4, s → h');
+      }
+      for (const s of eps[1].json.data){
+        obs.push(mkObs({ code: '59408-5', display: 'Oxygen saturation by Pulse oximetry', when: s.day + 'T07:00:00Z', value: s.spo2_percentage.average, unit: '%', ucum: '%', device: dev, note: 'Nightly average' }));
+        rep.add('daily_spo2.spo2_percentage.average', 'mapped', 'LOINC 59408-5');
+      }
+      for (const s of eps[2].json.data){
+        obs.push(mkObs({ code: '55423-8', display: 'Number of steps', cat: 'activity', period: { start: s.day + 'T00:00:00Z', end: s.day + 'T23:59:59Z' }, value: s.steps, unit: 'steps', ucum: '{steps}', device: dev }));
+        rep.add('daily_activity.steps', 'mapped', 'LOINC 55423-8');
+        rep.add('daily_activity.score', 'dropped', 'proprietary score');
+      }
+      rep.add('daily_readiness (score + contributors)', 'dropped', 'proprietary score', eps[3].json.data.length);
+      const byDay = {};
+      for (const p of eps[4].json.data) (byDay[p.timestamp.slice(0,10)] ||= []).push(p);
+      for (const [d, pts] of Object.entries(byDay)){
+        obs.push(hrSeries(pts[0].timestamp, pts[pts.length-1].timestamp, 300000, pts.map(p => p.bpm), dev));
+        rep.add('heartrate (5-min samples)', 'mapped', 'LOINC 8867-4 SampledData');
+      }
+      return { obs, report: rep.list() };
+    }
+  },
+
+  apple: {
+    name: 'Apple Health', device: 'Apple Watch Series 10', sub: 'HealthKit permission granted · synced just now', link: 'HealthKit (on-device)',
+    deviceRes: { manufacturer: 'Apple Inc.', model: 'Apple Watch Series 10' },
+    gen(n){
+      const st = story(n, 33), r = rng(9), src = "Jane's Apple Watch", samples = [];
+      const q = (type, value, unit, s, e) => samples.push({ type: 'HKQuantityTypeIdentifier' + type, value, unit, startDate: iso(s), endDate: iso(e || s), sourceName: src });
+      for (const s of st){
+        q('RestingHeartRate', r0(s.rhr), 'count/min', s.wake);
+        q('HeartRateVariabilitySDNN', r1(s.rmssd * .72), 'ms', s.wake);
+        q('OxygenSaturation', Math.round(s.spo2 * 10) / 1000, '%', s.wake);
+        q('RespiratoryRate', r1(s.resp), 'count/min', s.wake);
+        const e = new Date(s.date); e.setHours(23, 59, 0, 0);
+        q('StepCount', r0(s.steps), 'count', s.date, e);
+        samples.push({ type: 'HKCategoryTypeIdentifierSleepAnalysis', value: 'HKCategoryValueSleepAnalysisAsleepUnspecified', startDate: iso(new Date(s.bed.getTime() + s.awakeMin * 60000)), endDate: iso(s.wake), sourceName: src });
+      }
+      const last = st[st.length-1];
+      for (let h = 0; h < 24; h++){
+        const t = new Date(last.date); t.setHours(h, 5, 0, 0);
+        q('HeartRate', r0((h < 7 ? last.rhr + 2 : last.rhr + 20) + (r()-.5)*8 + (h === 14 ? 38 : 0)), 'count/min', t);
+      }
+      for (const k of [3, 1]){
+        const s = st[st.length - k]; if (!s) continue;
+        const t = new Date(s.date); t.setHours(k === 1 ? 14 : 2, 12, 0, 0);
+        samples.push({ type: 'HKCategoryTypeIdentifierIrregularHeartRhythmEvent', value: 'HKCategoryValueNotApplicable', startDate: iso(new Date(t.getTime() - 3.6e6)), endDate: iso(t), sourceName: src });
+      }
+      return [{ method: 'QUERY', host: 'HealthKit (on-device)', path: `HKSampleQuery · 8 types · since ${ymd(st[0].date)}`, json: { samples } }];
+    },
+    convert(eps){
+      const rep = Report(), obs = [], dev = this.device, hr = [];
+      for (const s of eps[0].json.samples){
+        const t = s.type.replace(/^HK(Quantity|Category)TypeIdentifier/, '');
+        if (t === 'RestingHeartRate'){ obs.push(mkObs({ code: '40443-4', display: 'Heart rate --resting', when: s.endDate, value: s.value, unit: 'beats/minute', ucum: '/min', device: dev })); rep.add('RestingHeartRate', 'mapped', 'LOINC 40443-4'); }
+        else if (t === 'HeartRateVariabilitySDNN'){ obs.push(mkObs({ code: '80404-7', display: 'R-R interval.standard deviation (Heart rate variability)', when: s.endDate, value: s.value, unit: 'ms', ucum: 'ms', device: dev })); rep.add('HeartRateVariabilitySDNN', 'mapped', 'LOINC 80404-7'); }
+        else if (t === 'OxygenSaturation'){ obs.push(mkObs({ code: '59408-5', display: 'Oxygen saturation by Pulse oximetry', when: s.endDate, value: r1(s.value * 100), unit: '%', ucum: '%', device: dev })); rep.add('OxygenSaturation', 'mapped', 'LOINC 59408-5, fraction → %'); }
+        else if (t === 'RespiratoryRate'){ obs.push(mkObs({ code: '9279-1', display: 'Respiratory rate', when: s.endDate, value: s.value, unit: 'breaths/minute', ucum: '/min', device: dev })); rep.add('RespiratoryRate', 'mapped', 'LOINC 9279-1'); }
+        else if (t === 'StepCount'){ obs.push(mkObs({ code: '55423-8', display: 'Number of steps', cat: 'activity', period: { start: s.startDate, end: s.endDate }, value: s.value, unit: 'steps', ucum: '{steps}', device: dev })); rep.add('StepCount', 'mapped', 'LOINC 55423-8'); }
+        else if (t === 'SleepAnalysis'){ obs.push(mkObs({ code: '93832-4', display: 'Sleep duration', cat: 'activity', period: { start: s.startDate, end: s.endDate }, value: r1((new Date(s.endDate) - new Date(s.startDate)) / 3.6e6), unit: 'h', ucum: 'h', device: dev })); rep.add('SleepAnalysis (asleep)', 'mapped', 'LOINC 93832-4'); }
+        else if (t === 'HeartRate'){ hr.push(s); }
+        else if (t === 'IrregularHeartRhythmEvent'){
+          const o = mkObs({ code: '8884-9', display: 'Heart rate rhythm', when: s.endDate, device: dev, note: 'Irregular rhythm notification from Apple Watch. Not a diagnosis.' });
+          o.valueCodeableConcept = { coding: [{ system: 'http://snomed.info/sct', code: '361137007', display: 'Irregular heart beat' }], text: 'Irregular rhythm notification' };
+          o.interpretation = [{ coding: [{ system: 'http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation', code: 'A', display: 'Abnormal' }] }];
+          obs.push(o); rep.add('IrregularHeartRhythmEvent', 'mapped', 'LOINC 8884-9 + SNOMED');
+        }
+      }
+      if (hr.length){ obs.push(hrSeries(hr[0].startDate, hr[hr.length-1].startDate, 3600000, hr.map(s => s.value), dev)); rep.add('HeartRate (hourly samples)', 'mapped', 'LOINC 8867-4 SampledData', hr.length); }
+      return { obs, report: rep.list() };
+    }
+  }
+};
+
+function hrSeries(start, end, periodMs, values, dev){
+  const o = mkObs({ code: '8867-4', display: 'Heart rate', period: { start, end }, device: dev });
+  o.valueSampledData = { origin: { value: 0, unit: 'beats/minute', system: UCUM, code: '/min' }, period: periodMs, dimensions: 1, data: values.join(' ') };
+  return o;
+}
+
+function buildBundle(src, obs){
+  const entry = [
+    { fullUrl: 'urn:uuid:patient', resource: { resourceType: 'Patient', identifier: PT_IDS, name: [{ family: 'Murphy', given: ['Jane'] }], gender: 'female', birthDate: '1968-03-14' },
+      request: { method: 'POST', url: 'Patient', ifNoneExist: `identifier=${IHI_SYS}|${IHI}` } },
+    { fullUrl: 'urn:uuid:device', resource: { resourceType: 'Device', manufacturer: src.deviceRes.manufacturer, deviceName: [{ name: src.deviceRes.model, type: 'model-name' }], type: { text: 'Consumer wearable' }, note: [{ text: 'Consumer device, data relayed by WatchLink. Not clinically validated.' }] },
+      request: { method: 'POST', url: 'Device' } },
+    ...obs.map((o, i) => ({ fullUrl: 'urn:uuid:obs-' + (i + 1), resource: o, request: { method: 'POST', url: 'Observation' } }))
+  ];
+  return { resourceType: 'Bundle', type: 'transaction', timestamp: new Date().toISOString(), entry };
+}
+
+/* ---------- mock hospital FHIR server ---------- */
+class MockFhir {
+  constructor(){ this.reset(); }
+  reset(){
+    this.seq = 5000;
+    this.store = { Patient: new Map(), Device: new Map(), Observation: new Map() };
+    this.store.Patient.set('lvuh-1001', { resourceType: 'Patient', id: 'lvuh-1001', meta: { versionId: '1', lastUpdated: '2019-06-02T09:14:00Z' },
+      identifier: PT_IDS, name: [{ family: 'Murphy', given: ['Jane'] }], gender: 'female', birthDate: '1968-03-14' });
+  }
+  async handle(method, path, body){
+    await sleep(180 + Math.random() * 320);
+    try { return this.route(method, path, body); }
+    catch (e) { return { status: 400, body: { resourceType: 'OperationOutcome', issue: [{ severity: 'error', code: 'invalid', diagnostics: e.message }] } }; }
+  }
+  route(method, path, body){
+    const [p, qs] = path.split('?'), q = new URLSearchParams(qs || ''), parts = p.split('/').filter(Boolean);
+    if (method === 'GET' && parts[0] === 'metadata') return { status: 200, body: { resourceType: 'CapabilityStatement', status: 'active', kind: 'instance', fhirVersion: '4.0.1', format: ['application/fhir+json'],
+      software: { name: 'LVUH mock FHIR server' }, rest: [{ mode: 'server', resource: ['Patient', 'Device', 'Observation'].map(type => ({ type, interaction: [{ code: 'read' }, { code: 'search-type' }, { code: 'create' }] })), interaction: [{ code: 'transaction' }] }] } };
+    if (method === 'POST' && parts.length === 0) return this.transaction(body);
+    if (method === 'GET' && parts.length === 1){ if (!this.store[parts[0]]) return { status: 404, body: this.oo('Unknown resource type ' + parts[0]) }; return { status: 200, body: this.search(parts[0], q) }; }
+    if (method === 'GET' && parts.length === 2){ const res = this.store[parts[0]]?.get(parts[1]); return res ? { status: 200, body: res } : { status: 404, body: this.oo('Not found') }; }
+    return { status: 405, body: this.oo('Method not allowed') };
+  }
+  oo(msg){ return { resourceType: 'OperationOutcome', issue: [{ severity: 'error', code: 'processing', diagnostics: msg }] }; }
+  transaction(b){
+    if (!b || b.resourceType !== 'Bundle' || b.type !== 'transaction') throw new Error('Expected a Bundle of type transaction');
+    const map = {}, resp = [], now = new Date().toISOString(), todo = [];
+    b.entry.forEach((e, i) => {
+      const type = e.resource.resourceType;
+      if (!this.store[type]) throw new Error('Unsupported resource type ' + type);
+      if (e.request?.ifNoneExist){
+        const hit = this.search(type, new URLSearchParams(e.request.ifNoneExist)).entry;
+        if (hit.length){ map[e.fullUrl] = type + '/' + hit[0].resource.id; resp[i] = { response: { status: '200 OK', location: `${type}/${hit[0].resource.id}/_history/1` } }; return; }
+      }
+      const id = (type === 'Observation' ? 'obs-' : type.toLowerCase() + '-') + (++this.seq);
+      map[e.fullUrl] = type + '/' + id; todo.push([i, e, id, type]);
+    });
+    for (const [i, e, id, type] of todo){
+      const json = JSON.stringify(e.resource).replace(/"(urn:uuid:[^"]+)"/g, (m, u) => map[u] ? JSON.stringify(map[u]) : m);
+      const res = JSON.parse(json); res.id = id; res.meta = { ...(res.meta || {}), versionId: '1', lastUpdated: now };
+      this.store[type].set(id, res);
+      resp[i] = { response: { status: '201 Created', location: `${type}/${id}/_history/1`, lastModified: now } };
+    }
+    return { status: 200, body: { resourceType: 'Bundle', type: 'transaction-response', entry: resp } };
+  }
+  search(type, q){
+    let list = [...this.store[type].values()];
+    for (const [k, v] of q){
+      if (k === 'identifier'){ const [sys, val] = v.includes('|') ? v.split('|') : [null, v]; list = list.filter(r => r.identifier?.some(i => i.value === val && (!sys || i.system === sys))); }
+      else if (k === 'subject' || k === 'patient'){ const ref = v.includes('/') ? v : 'Patient/' + v; list = list.filter(r => r.subject?.reference === ref); }
+      else if (k === 'code'){ const codes = v.split(',').map(c => c.split('|').pop()); list = list.filter(r => r.code?.coding?.some(c => codes.includes(c.code))); }
+    }
+    return { resourceType: 'Bundle', type: 'searchset', total: list.length, entry: list.map(r => ({ fullUrl: `${BASE_MOCK}/${type}/${r.id}`, resource: r, search: { mode: 'match' } })) };
+  }
+}
+const BASE_MOCK = 'https://fhir.lvuh.example/r4';
+
+
+
+const METRICS = {
+  '40443-4': { label: 'Resting heart rate', unit: 'bpm', band: [50, 80], dp: 0 },
+  'hrv-rmssd': { label: 'HRV (RMSSD)', unit: 'ms', dp: 0 },
+  '80404-7': { label: 'HRV (SDNN)', unit: 'ms', dp: 0 },
+  '59408-5': { label: 'SpO₂ (overnight)', unit: '%', band: [94, 100], dp: 1 },
+  '9279-1': { label: 'Respiratory rate (sleep)', unit: '/min', band: [12, 20], dp: 1 },
+  '93832-4': { label: 'Sleep duration', unit: 'h', band: [7, 9], dp: 1 },
+  '55423-8': { label: 'Steps', unit: 'steps', dp: 0 },
+  'skin-temp': { label: 'Skin temperature', unit: '°C', dp: 1 },
+};
+const codeOf = o => o.code?.coding?.[0]?.code;
+const whenOf = o => o.effectiveDateTime || o.effectivePeriod?.end || o.effectivePeriod?.start;
+
+function dailySeries(code){
+  const m = new Map();
+  for (const o of state.obs) if (codeOf(o) === code && o.valueQuantity){ const d = ymd(whenOf(o)); m.set(d, { d: new Date(whenOf(o)), v: o.valueQuantity.value, dev: o.device?.display }); }
+  return [...m.values()].sort((a, b) => a.d - b.d);
+}
+const avg = a => a.reduce((s, x) => s + x, 0) / a.length;
+
+function computeAlerts(){
+  const out = [];
+  const rhythm = state.obs.filter(o => codeOf(o) === '8884-9');
+  if (rhythm.length) out.push({ id: 'rhythm', level: 'danger', text: `${rhythm.length} irregular rhythm notification${rhythm.length > 1 ? 's' : ''} in the shared period`, sub: 'Latest ' + fmtDT(whenOf(rhythm.map(o => o).sort((a, b) => new Date(whenOf(b)) - new Date(whenOf(a)))[0])) + '. Known AF, on apixaban. Consider ECG at review.' });
+  const rhr = dailySeries('40443-4');
+  if (rhr.length >= 6){ const b = avg(rhr.slice(0, -3).map(x => x.v)), r = avg(rhr.slice(-3).map(x => x.v));
+    if (r - b >= 6) out.push({ id: 'rhr', level: 'warn', text: `Resting heart rate up ${r0(r - b)} bpm over the last 3 days`, sub: `3-day average ${r0(r)} bpm vs ${r0(b)} bpm baseline` }); }
+  for (const code of ['hrv-rmssd', '80404-7']){ const h = dailySeries(code);
+    if (h.length >= 6){ const b = avg(h.slice(0, -3).map(x => x.v)), r = avg(h.slice(-3).map(x => x.v));
+      if (r < b * .8) out.push({ id: 'hrv' + code, level: 'warn', text: `HRV down ${r0((1 - r / b) * 100)}% vs baseline`, sub: `${METRICS[code].label}: ${r0(r)} ms (3-day) vs ${r0(b)} ms` }); } }
+  const sp = dailySeries('59408-5'); const low = sp.filter(x => x.v < 92);
+  if (low.length) out.push({ id: 'spo2', level: 'warn', text: `Overnight SpO₂ below 92% on ${low.length} night${low.length > 1 ? 's' : ''}`, sub: low.map(x => `${fmtDay(x.d)}: ${x.v}%`).join(' · ') });
+  const sl = dailySeries('93832-4');
+  if (sl.length >= 3){ const r = avg(sl.slice(-3).map(x => x.v)); if (r < 6) out.push({ id: 'sleep', level: 'info', text: `Short sleep: ${r1(r)} h average over the last 3 nights`, sub: 'May reflect symptoms or nocturnal awakenings' }); }
+  return out;
+}
+
+function alertHTML(a){
+  const ic = { danger: '!', warn: '▲', info: 'i' }[a.level];
+  const acked = state.ack.has(a.id);
+  return `<div class="alert ${a.level} ${acked ? 'acked' : ''}"><span class="ic">${ic}</span><div class="tx">${esc(a.text)}<small>${esc(a.sub)}</small></div>
+    <button class="btn sm" data-ack="${a.id}">${acked ? 'Acknowledged' : 'Acknowledge'}</button></div>`;
+}
+
+function chartSVG(pts, m, opts = {}){
+  const W = opts.w || 300, H = opts.h || 110, L = 32, R = 10, T = 10, B = 20;
+  if (!pts.length) return '';
+  const vs = pts.map(p => p.v);
+  let lo = Math.min(...vs), hi = Math.max(...vs);
+  if (m.band){ lo = Math.min(lo, m.band[0]); hi = Math.max(hi, m.band[1]); }
+  const padv = (hi - lo) * .12 || 1; lo -= padv; hi += padv;
+  const t0 = +pts[0].d, t1 = +pts[pts.length - 1].d || t0 + 1;
+  const x = t => L + (t1 === t0 ? (W - L - R) / 2 : (t - t0) / (t1 - t0) * (W - L - R));
+  const y = v => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(m.label)} trend">`;
+  if (m.band) s += `<rect x="${L}" y="${y(m.band[1])}" width="${W - L - R}" height="${y(m.band[0]) - y(m.band[1])}" fill="#e7f4ec"/>`;
+  const fmt = v => m.dp ? v.toFixed(1) : String(Math.round(v));
+  s += `<text x="${L - 4}" y="${T + 4}" text-anchor="end" font-size="9" fill="#8590a2">${fmt(hi)}</text><text x="${L - 4}" y="${H - B}" text-anchor="end" font-size="9" fill="#8590a2">${fmt(lo)}</text>`;
+  const lab = opts.time ? fmtTime : fmtDay;
+  s += `<text x="${L}" y="${H - 5}" font-size="9" fill="#8590a2">${lab(pts[0].d)}</text><text x="${W - R}" y="${H - 5}" text-anchor="end" font-size="9" fill="#8590a2">${lab(pts[pts.length - 1].d)}</text>`;
+  s += `<polyline fill="none" stroke="#21466d" stroke-width="1.6" stroke-linejoin="round" points="${pts.map(p => x(+p.d).toFixed(1) + ',' + y(p.v).toFixed(1)).join(' ')}"/>`;
+  if (!opts.time) for (const p of pts){ const out = m.band && (p.v < m.band[0] || p.v > m.band[1]); s += `<circle cx="${x(+p.d)}" cy="${y(p.v)}" r="${out ? 3.2 : 2.2}" fill="${out ? '#c0362c' : '#21466d'}"/>`; }
+  return s + '</svg>';
+}
+
+
+
+/* ================= hospital-side demo ================= */
+class HospFhir extends MockFhir {
+  reset(){ super.reset(); this.store.Communication = new Map(); this.store.DocumentReference = new Map(); }
+  route(method, path, body){
+    const parts = path.split('?')[0].split('/').filter(Boolean);
+    if (method === 'POST' && parts.length === 1 && this.store[parts[0]]){
+      const id = parts[0].slice(0, 4).toLowerCase() + '-' + (++this.seq);
+      const res = { ...body, id, meta: { versionId: '1', lastUpdated: new Date().toISOString() } };
+      this.store[parts[0]].set(id, res); return { status: 201, body: res };
+    }
+    return super.route(method, path, body);
+  }
+}
+const mock = new HospFhir();
+const PID = 'lvuh-1001';
+const state = { src: 'whoop', days: 14, obs: [], ack: new Set(), act: 'summary', msgs: [], selMsg: null, notes: [], cdsSeen: -1, ver: 0, launched: false, selCell: null, lastMsgAt: null };
+const base = () => BASE_MOCK;
+
+/* traffic log */
+let nLog = 0;
+function log(e){
+  const L = $('#log'); if (!nLog++) L.innerHTML = '';
+  const sc = typeof e.status === 'number' ? (e.status < 300 ? 's2' : 's4') : 's0';
+  const row = document.createElement('div'); row.className = 'lrow';
+  row.innerHTML = `<span class="t">${new Date().toLocaleTimeString('en-IE')}</span><span class="a">${esc(e.actor)}</span><span class="m ${e.method}">${e.method}</span><span class="p" title="${esc(e.path)}">${esc(e.path)}</span><span class="${sc}">${esc(e.status)}</span><span class="ms">${e.ms != null ? e.ms + ' ms' : ''}</span>`;
+  const det = document.createElement('div'); det.className = 'ldet';
+  const show = o => { const s = JSON.stringify(o, null, 2); return esc(s.length > 50000 ? s.slice(0, 50000) + '\n… (truncated)' : s); };
+  det.innerHTML = (e.req ? `<h4>Request</h4><pre>${show(e.req)}</pre>` : '') + (e.res ? `<h4>Response</h4><pre>${show(e.res)}</pre>` : '') || '<h4>No payload</h4>';
+  row.onclick = () => det.classList.toggle('open');
+  L.append(row, det); L.scrollTop = L.scrollHeight;
+}
+async function api(actor, method, path, body){
+  const t0 = performance.now();
+  const { status, body: res } = await mock.handle(method, path, body);
+  log({ actor, method, path: base() + (path || '/') + (body?.resourceType === 'Bundle' ? `  (Bundle · ${body.type}, ${body.entry.length} entries)` : ''), status, ms: Math.round(performance.now() - t0), req: body, res });
+  return { status, body: res, ok: status < 300 };
+}
+async function fake(actor, method, url, status, req, res, ms){ await sleep(ms); log({ actor, method, path: url, status, ms, req, res }); }
+
+function alertsFor(list){ const keep = state.obs; state.obs = list; const a = computeAlerts(); state.obs = keep; return a; }
+
+/* ---- 0. outside the hospital: patient shares ---- */
+async function share(){
+  const btn = $('#shareBtn'), st = $('#shareSt'); btn.disabled = true; st.style.color = ''; st.textContent = 'Patient pressed “Send to my care team”…';
+  const src = SOURCES[state.src];
+  const eps = src.gen(state.days), conv = src.convert(eps), bundle = buildBundle(src, conv.obs);
+  for (const ep of eps) await fake(`WatchLink → ${src.name}`, ep.method, ep.method === 'QUERY' ? ep.host + ' · ' + ep.path : 'https://' + ep.host + ep.path, 200, null, ep.json, 150 + Math.floor(Math.random() * 200));
+  // 1. data in as Observations
+  const r = await api('WatchLink → LVUH FHIR', 'POST', '', bundle);
+  if (!r.ok){ st.style.color = '#c0362c'; st.textContent = 'Hospital rejected the bundle.'; btn.disabled = false; return; }
+  // 2. tell the clinician: Communication
+  const flags = alertsFor(conv.obs);
+  const txt = `WatchLink received ${state.days} days of data from ${src.device} for MURPHY, Jane (IHI ${IHI}).\n\n` +
+    (flags.length ? `Flags:\n${flags.map(f => '• ' + f.text).join('\n')}\n\n` : 'No flags.\n\n') +
+    `${conv.obs.length} readings have been filed to the chart (Flowsheets › Patient-Generated Data – Wearable).\nOpen the WatchLink app in the chart for trends.\n\nPatient-generated data from a consumer device. Not clinically validated.`;
+  const comm = { resourceType: 'Communication', status: 'completed', category: [{ text: 'Patient-generated data' }], priority: flags.some(f => f.level === 'danger') ? 'urgent' : 'routine',
+    subject: { reference: 'Patient/' + PID, display: 'Murphy, Jane' }, sent: new Date().toISOString(), sender: { display: 'WatchLink' }, recipient: [{ display: 'Byrne, Aoife' }],
+    payload: [{ contentString: txt }], note: [{ text: `${flags.length} flag(s)` }] };
+  await api('WatchLink → LVUH FHIR', 'POST', '/Communication', comm);
+  await fake('LVUH interface engine', 'ROUTE', 'Communication → In Basket pool “Cardiology OPD – Patient Data” (recipient: Byrne, Aoife)', 200, null, null, 250);
+  state.lastMsgAt = new Date();
+  $('#statIf').textContent = `Interface WATCHLINK (FHIR R4): active · last message ${fmtTime(state.lastMsgAt)}`;
+  await refreshInbox(false);
+  $('#ntoast').classList.add('show');
+  st.textContent = `✓ Sent: ${conv.obs.length} readings filed, 1 In Basket message.`; btn.disabled = false;
+}
+
+/* ---- 2. In Basket ---- */
+async function refreshInbox(logIt = true){
+  const r = logIt ? await api('LVUH EHR', 'GET', '/Communication?subject=' + encodeURIComponent('Patient/' + PID)) : { body: mock.search('Communication', new URLSearchParams()) };
+  const all = (r.body.entry || []).map(e => e.resource).sort((a, b) => b.sent.localeCompare(a.sent));
+  for (const m of all) if (!state.msgs.find(x => x.id === m.id)) state.msgs.unshift({ ...m, unread: true });
+  const unread = state.msgs.filter(m => m.unread).length;
+  $('#ibBtn').classList.toggle('has', unread > 0); $('#ibN').textContent = unread;
+  renderInbox();
+}
+function renderInbox(){
+  $('#ibList').innerHTML = state.msgs.length ? state.msgs.map(m => `<div class="ibm ${m.unread ? 'unread' : ''} ${state.selMsg === m.id ? 'on' : ''}" data-msg="${m.id}">
+      ${m.priority === 'urgent' ? '<span class="abn">!</span> ' : ''}Patient-generated data received<br><span class="muted">${esc(m.subject.display)} · from ${esc(m.sender.display)} · ${fmtDT(m.sent)} · ${esc(m.note[0].text)}</span></div>`).join('')
+    : '<div class="ibm muted">No messages.</div>';
+  const m = state.msgs.find(x => x.id === state.selMsg);
+  $('#ibDet').innerHTML = m ? `<b>Patient-generated data received</b>  <span class="muted">${fmtDT(m.sent)}</span>\nPatient: ${esc(m.subject.display)} (IHI ${IHI})   From: ${esc(m.sender.display)}\n\n${esc(m.payload[0].contentString)}\n\n<button class="btn pri" id="ibOpen">Open Chart</button> <button class="btn" id="ibDone">Done</button>` : '<span class="muted">Select a message.</span>';
+}
+
+/* ---- data + 3. CDS Hooks ---- */
+async function loadObs(actor = 'LVUH EHR'){
+  const o = await api(actor, 'GET', `/Observation?subject=${encodeURIComponent('Patient/' + PID)}&_count=1000`);
+  state.obs = (o.body.entry || []).map(e => e.resource); state.ver = state.obs.length;
+}
+async function patientView(){
+  if (!state.obs.length || state.cdsSeen === state.ver) return;
+  const alerts = computeAlerts().filter(a => !state.ack.has(a.id));
+  const req = { hook: 'patient-view', hookInstance: uuid(Math.random), fhirServer: BASE_MOCK, context: { userId: 'Practitioner/byrne-a', patientId: PID },
+    fhirAuthorization: { token_type: 'Bearer', scope: 'patient/Observation.read', subject: 'watchlink-cds', access_token: '••••' } };
+  const cards = alerts.filter(a => a.level !== 'info').map(a => ({ uuid: a.id, summary: a.text, detail: a.sub, indicator: a.level === 'danger' ? 'critical' : 'warning', source: { label: 'WatchLink (patient-generated wearable data)' },
+    links: [{ label: 'Open WatchLink', type: 'smart', url: 'https://app.watchlink.example/launch' }] }));
+  await fake('LVUH EHR → WatchLink CDS', 'POST', 'https://cds.watchlink.example/cds-services/wearable-flags  (hook: patient-view)', 200, req, { cards }, 260);
+  state.cdsSeen = state.ver;
+  if (!cards.length) return;
+  $('#dlg').innerHTML = `<div class="t">Clinical Advisory: Murphy, Jane<span class="sp"></span>CDS</div>
+    <div class="bd"><div style="margin-bottom:8px">Wearable data shared by this patient has been flagged for review.</div>
+    ${cards.map(c => `<div class="card ${c.indicator}"><b>${esc(c.summary)}</b><span class="muted">${esc(c.detail)}</span></div>`).join('')}
+    <div class="muted" style="margin-top:6px">Source: ${esc(cards[0].source.label)}. Not clinically validated.</div></div>
+    <div class="ft"><span>Acknowledge reason:</span><select id="ackWhy"><option>Will review at next visit</option><option>Contacted patient</option><option>Already aware</option><option>Not clinically relevant</option></select>
+    <span class="sp"></span><button class="btn pri" id="cdsOpen">Open WatchLink</button><button class="btn" id="cdsAck">Acknowledge</button></div>`;
+  $('#ov').classList.add('show');
+  $('#cdsAck').onclick = async () => { const why = $('#ackWhy').value; cards.forEach(c => state.ack.add(c.uuid)); $('#ov').classList.remove('show');
+    await fake('LVUH EHR → WatchLink CDS', 'POST', 'https://cds.watchlink.example/cds-services/wearable-flags/feedback', 200, { feedback: cards.map(c => ({ card: c.uuid, outcome: 'overridden', overrideReason: { reason: { display: why } }, outcomeTimestamp: new Date().toISOString() })) }, null, 150);
+    render(); };
+  $('#cdsOpen').onclick = async () => { $('#ov').classList.remove('show');
+    await fake('LVUH EHR → WatchLink CDS', 'POST', 'https://cds.watchlink.example/cds-services/wearable-flags/feedback', 200, { feedback: cards.map(c => ({ card: c.uuid, outcome: 'accepted', acceptedSuggestions: [], outcomeTimestamp: new Date().toISOString() })) }, null, 150);
+    setAct('watchlink'); };
+}
+async function openChart(){
+  $('#ib').classList.remove('show');
+  await loadObs(); setAct('summary'); await patientView();
+}
+
+/* ---- activities ---- */
+const TITLES = { summary: 'Summary', results: 'Results Review', flow: 'Flowsheets', notes: 'Notes', meds: 'Medications', problems: 'Problem List', orders: 'Orders', watchlink: 'WatchLink' };
+function setAct(a){ state.act = a; $$('#side .act').forEach(b => b.classList.toggle('on', b.dataset.act === a)); render(); if (a === 'watchlink') smartLaunch(); }
+
+function render(){
+  $('#actTitle').textContent = TITLES[state.act];
+  const f = { summary: vSummary, results: vResults, flow: vFlow, notes: vNotes, meds: vMeds, problems: vProblems, orders: vOrders, watchlink: vSmart }[state.act];
+  $('#actBody').innerHTML = f();
+}
+const allNotes = () => [...state.notes, { id: 'n2', date: '2026-10-12T10:40:00Z', type: 'Outpatient Clinic Letter', author: 'Byrne, Aoife', text: 'Reviewed in cardiology OPD. Paroxysmal AF, rate controlled on bisoprolol. Anticoagulated with apixaban. Asymptomatic. BP 138/84. Plan: continue current therapy, review in 6 weeks. Patient interested in sharing smartwatch data.' },
+  { id: 'n1', date: '2026-08-30T15:05:00Z', type: 'Discharge Summary', author: 'Kelly, Ronan (Reg)', text: 'Admitted with palpitations, new paroxysmal AF. CHA2DS2-VASc 3. Commenced apixaban 5 mg BD and bisoprolol 2.5 mg OD. Echo: preserved LV function.' }];
+
+function vSummary(){
+  const n = allNotes()[0];
+  return `<div class="ac"><div class="cols">
+    <div class="pn"><h3>Active Problems</h3><div class="b">Paroxysmal atrial fibrillation (I48.0)<br>Essential hypertension (I10)<br>Type 2 diabetes mellitus (E11.9)</div></div>
+    <div class="pn"><h3>Current Medications</h3><div class="b">Apixaban 5 mg PO BD<br>Bisoprolol 2.5 mg PO OD<br>Ramipril 5 mg PO OD<br>Metformin 1 g PO BD</div></div>
+    <div class="pn"><h3>Last Vitals (12/10/2026 10:40)</h3><div class="b">BP 138/84 · P 74 · SpO2 97% · T 36.8 · RR 16 · Wt 71.2 kg</div></div></div>
+    <div class="pn"><h3>Recent Results</h3><div class="b"><table class="nt"><tr><th>Test</th><th>Result</th><th>Ref</th><th>Date</th></tr>
+      <tr><td>HbA1c</td><td class="abn">58 mmol/mol H</td><td>20–42</td><td>12/10/2026</td></tr><tr><td>eGFR</td><td>78 mL/min</td><td>&gt;60</td><td>12/10/2026</td></tr><tr><td>Potassium</td><td>4.2 mmol/L</td><td>3.5–5.3</td><td>12/10/2026</td></tr></table></div></div>
+    <div class="pn"><h3>Last Note</h3><div class="b"><b>${esc(n.type)}</b> · ${esc(n.author)} · ${fmtDT(n.date)}<br>${esc(n.text.slice(0, 220))}${n.text.length > 220 ? '…' : ''}</div></div></div>`;
+}
+function vResults(){ return `<div class="ac"><table class="nt"><tr><th>Date</th><th>Test</th><th>Result</th><th>Ref range</th><th>Status</th></tr>
+  <tr><td>12/10/2026</td><td>HbA1c</td><td class="abn">58 mmol/mol H</td><td>20–42</td><td>Final</td></tr><tr><td>12/10/2026</td><td>Urea &amp; Electrolytes</td><td>Na 139, K 4.2, Cr 74</td><td></td><td>Final</td></tr>
+  <tr><td>12/10/2026</td><td>Full Blood Count</td><td>Hb 13.4, WCC 6.8, Plt 241</td><td></td><td>Final</td></tr><tr><td>30/08/2026</td><td>Echocardiogram</td><td>LVEF 58%, mild LA dilatation</td><td></td><td>Final</td></tr>
+  <tr><td>30/08/2026</td><td>12-lead ECG</td><td class="abn">Atrial fibrillation, rate 118</td><td></td><td>Final</td></tr></table></div>`; }
+function vMeds(){ return `<div class="ac"><table class="nt"><tr><th>Medication</th><th>Dose</th><th>Route</th><th>Frequency</th><th>Start</th><th>Prescriber</th></tr>
+  <tr><td>Apixaban</td><td>5 mg</td><td>PO</td><td>BD</td><td>30/08/2026</td><td>Kelly, R</td></tr><tr><td>Bisoprolol</td><td>2.5 mg</td><td>PO</td><td>OD</td><td>30/08/2026</td><td>Kelly, R</td></tr>
+  <tr><td>Ramipril</td><td>5 mg</td><td>PO</td><td>OD</td><td>14/02/2022</td><td>GP</td></tr><tr><td>Metformin</td><td>1 g</td><td>PO</td><td>BD</td><td>03/05/2020</td><td>GP</td></tr></table></div>`; }
+function vProblems(){ return `<div class="ac"><table class="nt"><tr><th>Problem</th><th>Code</th><th>Noted</th><th>Status</th></tr><tr><td>Paroxysmal atrial fibrillation</td><td>I48.0</td><td>30/08/2026</td><td>Active</td></tr>
+  <tr><td>Essential hypertension</td><td>I10</td><td>2022</td><td>Active</td></tr><tr><td>Type 2 diabetes mellitus</td><td>E11.9</td><td>2020</td><td>Active</td></tr></table></div>`; }
+function vOrders(){ return `<div class="ac"><table class="nt"><tr><th>Order</th><th>Status</th><th>Ordered</th></tr><tr><td>Echocardiogram (follow-up)</td><td>Scheduled 02/12/2026</td><td>12/10/2026</td></tr><tr><td>HbA1c</td><td>Pending (3 months)</td><td>12/10/2026</td></tr></table></div>`; }
+function vNotes(){
+  const ns = allNotes(); const sel = ns.find(n => n.id === state.selNote) || ns[0];
+  return `<div class="ac"><table class="nt"><tr><th>Date</th><th>Type</th><th>Author</th><th>Status</th></tr>${ns.map(n => `<tr class="${n === sel ? 'sel' : ''}" data-note="${n.id}" style="cursor:pointer"><td>${fmtDT(n.date)}</td><td>${esc(n.type)}</td><td>${esc(n.author)}</td><td>${n.filed ? 'Filed (interface)' : 'Signed'}</td></tr>`).join('')}</table>
+    <div class="pn" style="margin-top:10px"><h3>${esc(sel.type)} · ${esc(sel.author)}</h3><div class="b" style="white-space:pre-wrap">${esc(sel.text)}</div></div></div>`;
+}
+
+/* ---- 1. flowsheet ---- */
+const FS_ROWS = [['40443-4', 'Resting heart rate (wearable)', 'bpm'], ['hrv-rmssd', 'HRV RMSSD (wearable)', 'ms'], ['80404-7', 'HRV SDNN (wearable)', 'ms'], ['59408-5', 'SpO2 overnight (wearable)', '%'], ['9279-1', 'Resp rate, sleep (wearable)', '/min'], ['93832-4', 'Sleep duration (wearable)', 'h'], ['55423-8', 'Steps (wearable)', ''], ['skin-temp', 'Skin temp (wearable)', '°C']];
+function vFlow(){
+  const has = state.obs.length > 0;
+  let dates = [...new Set(state.obs.filter(o => o.valueQuantity || codeOf(o) === '8884-9').map(o => ymd(whenOf(o))))].sort().slice(-7);
+  if (!dates.length){ const t = new Date(); dates = Array.from({ length: 7 }, (_, i) => { const d = new Date(t); d.setDate(t.getDate() - 6 + i); return ymd(d); }); }
+  const head = `<tr><th style="text-align:left">Row</th><th>12/10<br>10:40</th>${dates.map(d => `<th>${fmtDay(d + 'T12:00:00')}</th>`).join('')}</tr>`;
+  const vit = [['BP', '138/84'], ['Pulse', '74'], ['SpO2', '97'], ['Temp', '36.8'], ['Resp', '16'], ['Weight (kg)', '71.2']]
+    .map(([l, v]) => `<tr><td class="rl">${l}</td><td>${v}</td>${dates.map(() => '<td></td>').join('')}</tr>`).join('');
+  let pgd = '';
+  for (const [code, label, unit] of FS_ROWS){
+    const s = dailySeries(code); if (has && !s.length) continue;
+    const m = METRICS[code], by = Object.fromEntries(s.map(x => [ymd(x.d), x]));
+    pgd += `<tr><td class="rl" title="Filed via FHIR Observation, code ${code}">${label}${unit ? ` <span class="muted">${unit}</span>` : ''}</td><td></td>${dates.map(d => { const x = by[d]; if (!x) return '<td></td>';
+      const ab = m.band && (x.v < m.band[0] || x.v > m.band[1]); const key = code + '|' + d;
+      return `<td class="c ${ab ? 'abn' : ''} ${state.selCell === key ? 'sel' : ''}" data-cell="${key}">${ab ? '!' : ''}${m.dp ? x.v.toFixed(1) : Math.round(x.v)}</td>`; }).join('')}</tr>`;
+  }
+  const rh = state.obs.filter(o => codeOf(o) === '8884-9');
+  if (rh.length || !has){
+    const by = {}; rh.forEach(o => { const d = ymd(whenOf(o)); by[d] = (by[d] || 0) + 1; });
+    pgd += `<tr><td class="rl">Irregular rhythm notification (wearable)</td><td></td>${dates.map(d => by[d] ? `<td class="c abn ${state.selCell === '8884-9|' + d ? 'sel' : ''}" data-cell="8884-9|${d}">!Yes ×${by[d]}</td>` : '<td></td>').join('')}</tr>`;
+  }
+  let info = '<span class="muted">Click a value to see where it came from.</span>';
+  if (state.selCell){
+    const [code, d] = state.selCell.split('|');
+    const o = state.obs.filter(x => codeOf(x) === code && ymd(whenOf(x)) === d).pop();
+    if (o) info = `<b>${esc(o.code.coding[0].display)}</b> · ${o.valueQuantity ? esc(o.valueQuantity.value + ' ' + o.valueQuantity.unit) : esc(o.valueCodeableConcept?.text || '')} · taken ${fmtDT(whenOf(o))} · source ${esc(o.device?.display || '')} (patient-generated) · filed ${fmtDT(o.meta.lastUpdated)} by interface WATCHLINK · <span class="muted">Observation/${esc(o.id)} · ${o.code.coding[0].system === LOINC ? 'LOINC' : 'local'} ${esc(code)}</span>`;
+  }
+  return `<div class="ac"><div class="fsw"><div class="fsl"><div class="pn"><h3>Flowsheet</h3><div class="b">
+      <div class="it">Vital Signs</div><div class="it on">OPD Cardiology</div><div class="it">Diabetes Review</div><div class="it">Fluid Balance</div></div></div>
+      <div class="muted">Showing: OPD Cardiology · last 7 days with data</div></div>
+    <div><div class="fsg"><table class="fs"><thead>${head}</thead><tbody>
+      <tr class="gh"><td colspan="${dates.length + 2}">Vital Signs</td></tr>${vit}
+      <tr class="gh"><td colspan="${dates.length + 2}"><span class="ipm" data-ip="1">Patient-Generated Data – Wearable</span> <span class="muted" style="font-weight:400">(interface-filed, not clinically validated)</span></td></tr>
+      ${pgd || ''}${!has ? `<tr><td class="rl muted" colspan="${dates.length + 2}">No data filed.</td></tr>` : ''}
+    </tbody></table></div><div class="fsinfo">${info}</div></div></div></div>`;
+}
+
+/* ---- 4. SMART on FHIR app ---- */
+async function smartLaunch(){
+  if (state.launched) return;
+  state.launched = 'pending'; render();
+  const launch = 'xK2' + Math.random().toString(36).slice(2, 8);
+  await fake('LVUH EHR → WatchLink app', 'LAUNCH', `https://app.watchlink.example/launch?iss=${encodeURIComponent(BASE_MOCK)}&launch=${launch}`, 302, null, null, 200);
+  await fake('WatchLink app → LVUH auth', 'GET', `https://auth.lvuh.example/oauth2/authorize?response_type=code&client_id=watchlink&scope=launch%20openid%20fhirUser%20patient%2FObservation.read%20patient%2FDocumentReference.write&launch=${launch}&aud=${encodeURIComponent(BASE_MOCK)}`, 302, null, null, 180);
+  await fake('WatchLink app → LVUH auth', 'POST', 'https://auth.lvuh.example/oauth2/token', 200, { grant_type: 'authorization_code', code: '••••', redirect_uri: 'https://app.watchlink.example/callback' },
+    { access_token: '••••', token_type: 'Bearer', expires_in: 3600, scope: 'launch openid fhirUser patient/Observation.read patient/DocumentReference.write', patient: PID, encounter: 'enc-88231', need_patient_banner: false }, 220);
+  await loadObs('WatchLink app → LVUH FHIR');
+  state.launched = true; if (state.act === 'watchlink') render();
+}
+function vSmart(){
+  const bar = `<div class="smart-bar"><span>Embedded app: WatchLink · SMART on FHIR</span><span>Patient context: Patient/${PID}</span><span class="sp"></span><span>${state.launched === true ? 'Authorised (EHR single sign-on)' : 'Launching…'}</span></div>`;
+  if (state.launched !== true) return `<div class="smart">${bar}<div class="app"><div class="empty">Connecting to LVUH with your EHR login…</div></div></div>`;
+  const alerts = computeAlerts(), devices = [...new Set(state.obs.map(o => o.device?.display).filter(Boolean))];
+  let h = `<div class="apph"><div class="logo">W</div><div><b>WatchLink for clinicians</b><span>Murphy, Jane · ${state.obs.length} readings · ${esc(devices.join(', ') || 'no device data')}</span></div><span class="sp"></span>
+    ${state.obs.length ? '<button class="abtn sec" id="fileNote">File summary to Notes</button>' : ''}</div>`;
+  if (!state.obs.length) return `<div class="smart">${bar}<div class="app">${h}<div class="empty">This patient hasn't shared any wearable data yet.</div></div></div>`;
+  h += `<div class="disc">Patient-generated data from a consumer device. Not clinically validated. Use as context, not for diagnosis. The shaded band is the expected range.</div>`;
+  h += `<div class="alerts">${alerts.map(alertHTML).join('') || '<div class="empty">No flags.</div>'}</div><div class="charts">`;
+  for (const [code, m] of Object.entries(METRICS)){
+    const s = dailySeries(code); if (!s.length) continue;
+    const last = s[s.length - 1], a = avg(s.map(x => x.v)), f = v => m.dp ? v.toFixed(1) : Math.round(v).toLocaleString();
+    h += `<div class="ch"><div class="hd"><span class="lb">${m.label}</span><span class="cd">${/^\d/.test(code) ? 'LOINC ' : 'local '}${code}</span></div><div class="v">${f(last.v)}<small>${m.unit}</small></div><div class="sub">${fmtDay(last.d)} · ${s.length}-day avg ${f(a)}</div>${chartSVG(s, m)}</div>`;
+  }
+  h += '</div>';
+  const hr = state.obs.filter(o => codeOf(o) === '8867-4' && o.valueSampledData).sort((a, b) => new Date(b.effectivePeriod.start) - new Date(a.effectivePeriod.start))[0];
+  if (hr){
+    const st = +new Date(hr.effectivePeriod.start), per = hr.valueSampledData.period;
+    const pts = hr.valueSampledData.data.split(' ').map((v, k) => ({ d: new Date(st + k * per), v: +v })), mx = pts.reduce((a, b) => b.v > a.v ? b : a);
+    h += `<div class="sec">Intraday heart rate · ${fmtDay(st)}</div><div class="ch"><div class="hd"><span class="lb">Heart rate</span><span class="cd">LOINC 8867-4 · every ${per / 60000} min</span></div><div class="sub">Peak ${mx.v} bpm at ${fmtTime(mx.d)}</div>${chartSVG(pts, { label: 'Heart rate', band: [50, 100], dp: 0 }, { time: true, w: 640, h: 140 })}</div>`;
+  }
+  const rh = state.obs.filter(o => codeOf(o) === '8884-9').sort((a, b) => new Date(whenOf(b)) - new Date(whenOf(a)));
+  if (rh.length) h += `<div class="sec">Rhythm notifications</div><table class="nt"><tr><th>Time</th><th>Finding</th><th>Device</th></tr>${rh.map(o => `<tr><td>${fmtDT(whenOf(o))}</td><td class="abn">${esc(o.valueCodeableConcept?.text || '')}</td><td>${esc(o.device?.display || '')}</td></tr>`).join('')}</table>`;
+  return `<div class="smart">${bar}<div class="app">${h}</div></div>`;
+}
+
+/* ---- 5. write-back note ---- */
+async function fileNote(){
+  const alerts = computeAlerts(), f = (code, dp) => { const s = dailySeries(code); if (!s.length) return null; const l = s[s.length - 1].v; return dp ? l.toFixed(1) : Math.round(l); };
+  const lines = [['Resting HR', f('40443-4'), 'bpm'], ['HRV (RMSSD)', f('hrv-rmssd'), 'ms'], ['HRV (SDNN)', f('80404-7'), 'ms'], ['SpO2 overnight', f('59408-5', 1), '%'], ['Sleep', f('93832-4', 1), 'h']].filter(x => x[1] != null);
+  const text = `WEARABLE DATA SUMMARY (patient-generated, not clinically validated)\nSource: ${[...new Set(state.obs.map(o => o.device?.display))].join(', ')} via WatchLink\n\nLatest values:\n${lines.map(l => `  ${l[0]}: ${l[1]} ${l[2]}`).join('\n')}\n\nFlags:\n${alerts.map(a => '  • ' + a.text + (state.ack.has(a.id) ? ' (acknowledged)' : '')).join('\n') || '  None'}\n\nFiled by WatchLink at the request of Byrne, Aoife.`;
+  const doc = { resourceType: 'DocumentReference', status: 'current', docStatus: 'preliminary', type: { coding: [{ system: LOINC, code: '11506-3', display: 'Progress note' }], text: 'Wearable Data Summary' },
+    subject: { reference: 'Patient/' + PID }, date: new Date().toISOString(), author: [{ display: 'WatchLink (for Byrne, Aoife)' }],
+    content: [{ attachment: { contentType: 'text/plain', data: btoa(unescape(encodeURIComponent(text))) } }] };
+  const r = await api('WatchLink app → LVUH FHIR', 'POST', '/DocumentReference', doc);
+  if (r.ok){ state.notes.unshift({ id: r.body.id, date: r.body.date, type: 'Wearable Data Summary', author: 'WatchLink (for Byrne, Aoife)', text, filed: true }); state.selNote = r.body.id;
+    const b = $('#fileNote'); if (b){ b.textContent = '✓ Filed to Notes'; b.disabled = true; } }
+}
+
+/* ---- wiring ---- */
+$('#side').onclick = e => { const b = e.target.closest('.act'); if (b) setAct(b.dataset.act); };
+$('#refresh').onclick = async () => { await loadObs(state.act === 'watchlink' ? 'WatchLink app → LVUH FHIR' : 'LVUH EHR'); render(); if (state.act !== 'watchlink') patientView(); };
+$('#ibBtn').onclick = () => { $('#ntoast').classList.remove('show'); $('#ib').classList.toggle('show'); refreshInbox(); };
+$('#ntoast').onclick = $('#ibBtn').onclick;
+$('#ibClose').onclick = () => $('#ib').classList.remove('show');
+document.addEventListener('click', async e => {
+  const m = e.target.closest('[data-msg]'); if (m){ state.selMsg = m.dataset.msg; const x = state.msgs.find(y => y.id === state.selMsg); if (x) x.unread = false;
+    const un = state.msgs.filter(y => y.unread).length; $('#ibBtn').classList.toggle('has', un > 0); $('#ibN').textContent = un; renderInbox(); return; }
+  if (e.target.id === 'ibOpen'){ openChart(); return; }
+  if (e.target.id === 'ibDone'){ state.msgs = state.msgs.filter(y => y.id !== state.selMsg); state.selMsg = null; renderInbox(); return; }
+  if (e.target.id === 'fileNote'){ fileNote(); return; }
+  const c = e.target.closest('[data-cell]'); if (c){ state.selCell = c.dataset.cell; render(); return; }
+  const n = e.target.closest('[data-note]'); if (n){ state.selNote = n.dataset.note; render(); return; }
+  const a = e.target.closest('[data-ack]'); if (a){ state.ack.add(a.dataset.ack); render(); }
+});
+$('#srcSeg').onclick = e => { const b = e.target.closest('button'); if (!b) return; $$('#srcSeg button').forEach(x => x.classList.toggle('on', x === b)); state.src = b.dataset.src; };
+$('#days').onchange = e => state.days = +e.target.value;
+$('#shareBtn').onclick = share;
+$('#ipChk').onchange = e => document.body.classList.toggle('ip', e.target.checked);
+$('#logChk').onchange = e => $('#drawer').classList.toggle('show', e.target.checked);
+$('#dcMin').onclick = () => { $('#dc').classList.toggle('min'); document.body.classList.toggle('dcmin', $('#dc').classList.contains('min')); $('#dcMin').textContent = $('#dc').classList.contains('min') ? '+' : '–'; };
+$('#clearLog').onclick = () => { nLog = 0; $('#log').innerHTML = '<div class="lempty">No traffic yet.</div>'; };
+$('#resetBtn').onclick = () => { mock.reset(); Object.assign(state, { obs: [], msgs: [], selMsg: null, notes: [], cdsSeen: -1, ver: 0, launched: false, selCell: null, selNote: null }); state.ack.clear();
+  $('#ibBtn').classList.remove('has'); $('#ntoast').classList.remove('show'); $('#ib').classList.remove('show'); $('#shareSt').textContent = '';
+  $('#statIf').textContent = 'Interface WATCHLINK (FHIR R4): active · no messages today'; setAct('summary'); };
+setInterval(() => $('#clock').textContent = new Date().toLocaleString('en-IE', { dateStyle: 'short', timeStyle: 'short' }), 1000);
+render();
+</script>
+</body>
+</html>
